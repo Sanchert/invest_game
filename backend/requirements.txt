@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+psycopg2-binary
+sqlalchemy
+pydantic-settings
+websockets
+psycopg2-binary
