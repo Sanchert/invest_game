@@ -1,113 +1,133 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class TeamBase(BaseModel):
-    name: str
+class CreateGameIn(BaseModel):
+    turns: int = Field(ge=1, le=20)
+    turn_seconds: int = Field(ge=10, le=3600)
+    startups_count: int = Field(default=5, ge=1, le=12)
 
 
-class TeamCreate(TeamBase):
-    pass
+class CreateGameOut(BaseModel):
+    room_code: str
+    turns_total: int
+    turn_seconds: int
+    startups_count: int
 
-class LeaderboardEntry(BaseModel):
+
+class JoinIn(BaseModel):
+    name: str = Field(min_length=1, max_length=30)
+
+    @field_validator("name")
+    @classmethod
+    def clean(cls, v: str) -> str:
+        v = " ".join(v.split())
+        if not v:
+            raise ValueError("name must not be empty")
+        return v
+
+
+class JoinOut(BaseModel):
     team_id: int
     name: str
-    cash: int
-    portfolio_value: int
-    total_wealth: int
-    
-    class Config:
-            from_attributes = True
-
-class StartupBasicResponse(BaseModel):
-    id: int
-    name: str
-    description: str
-    current_price: int
-    class Config:
-        from_attributes = True
-
-class TeamResponse(TeamBase):
-    id: int
-    cash: int
-    is_ready: bool
-
-    class Config:
-        from_attributes = True
+    token: str
 
 
-class GameCreate(BaseModel):
-    total_rounds: int = 5
-    round_duration_mins: int = 10
-    starting_capital: int = 600
-
-
-class GameResponse(BaseModel):
-    id: int
-    room_code: str
-    status: str
-    current_round: int
-
-    class Config:
-        from_attributes = True
-
-
-class TeamResponse(BaseModel):
-    id: int
-    name: str
-    cash: int
-    session_token: str
-
-    class Config:
-        from_attributes = True
-
-
-class GameStatusResponse(BaseModel):
-    id: int
-    room_code: str
-    status: str
-    teams: List[TeamResponse]
-
-    class Config:
-        from_attributes = True
-
-
-class GameStartResponse(BaseModel):
-    status: str
-    message: str
-    state_end_time: Optional[datetime]
-
-
-class InvestmentAction(BaseModel):
+class TradeIn(BaseModel):
     startup_id: int
-    shares_to_buy: int
+    shares: int = Field(ge=-1000, le=1000)  # positive = buy, negative = sell
+
+    @field_validator("shares")
+    @classmethod
+    def nonzero(cls, v: int) -> int:
+        if v == 0:
+            raise ValueError("shares must not be zero")
+        return v
 
 
-class NewsResponse(BaseModel):
-    text: str
-    multiplier: float
+# ----------------------------------------------------------------------- board
+class BoardTeam(BaseModel):
+    id: int
+    name: str
+    ready: bool
+    rank: Optional[int] = None    # only in RESULTS / FINISHED
+    score: Optional[int] = None   # only in FINISHED
 
-    class Config:
-        from_attributes = True
+
+class ProfitPoint(BaseModel):
+    turn: int
+    profit: int
 
 
-class StartupWithNewsResponse(BaseModel):
+class BoardStartup(BaseModel):
     id: int
     name: str
     description: str
-    current_price: int
-    current_news: Optional[NewsResponse] = None
+    open: bool
+    last_turn: int
+    price: Optional[int] = None
+    news: Optional[str] = None
+    profits: List[ProfitPoint]
 
-    class Config:
-        from_attributes = True
+
+class ChartSeries(BaseModel):
+    team: str
+    scores: List[int]
 
 
-class StartupImport(BaseModel):
+class Chart(BaseModel):
+    turns: List[int]
+    series: List[ChartSeries]
+
+
+class BoardOut(BaseModel):
+    room_code: str
+    phase: str
+    turn_no: int
+    turns_total: int
+    turn_seconds: int
+    min_teams: int
+    server_time: str
+    phase_ends_at: Optional[str] = None
+    countdown_ends_at: Optional[str] = None
+    teams: List[BoardTeam]
+    startups: List[BoardStartup]
+    chart: Optional[Chart] = None
+
+
+# ------------------------------------------------------------------------- me
+class HoldingOut(BaseModel):
+    startup_id: int
+    shares: int
+
+
+class InsiderOut(BaseModel):
+    turn: int
+    startup_id: int
+    startup_name: str
+    text: str
+
+
+class MeOut(BaseModel):
+    team_id: int
     name: str
-    description: str
-    base_price: int
-    news: List[Dict[str, Any]] = [] # Список новостей вида {"text": "...", "multiplier": 1.5}
+    ready: bool
+    cash: int
+    capital: int
+    holdings: List[HoldingOut]
+    insiders: List[InsiderOut]
+    insider_cost: int
+    insiders_left: int
+    rank: Optional[int] = None
+    score: Optional[int] = None
 
-class GameImport(BaseModel):
-    startups: List[StartupImport]
+
+class InsiderBought(BaseModel):
+    insider: InsiderOut
+    me: MeOut
+
+
+class ErrorOut(BaseModel):
+    code: str
+    message: str

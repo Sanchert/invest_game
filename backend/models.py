@@ -1,170 +1,115 @@
-import enum
-from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import (
-    String, Integer, Float, Boolean, ForeignKey, DateTime, Enum as SqlEnum
-)
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime, timezone
+from typing import Optional
+
+from sqlalchemy import (Boolean, DateTime, ForeignKey, Integer, String, Text,
+                        UniqueConstraint)
+from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
 
 
-class GameStatus(str, enum.Enum):
-    LOBBY = "LOBBY"
-    INVESTING = "INVESTING"
-    SHOW_NEWS = "SHOW_NEWS"
-    BUY_INSIDER = "BUY_INSIDER"
-    REBALANCING = "REBALANCING"
-    FINISHED = "FINISHED"
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-class   Game(Base):
+def _cascade(table: str) -> ForeignKey:
+    return ForeignKey(f"{table}.id", ondelete="CASCADE")
+
+
+# ---------------------------------------------------------------- content library
+class Startup(Base):
+    __tablename__ = "startups"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True)
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text)
+    last_turn: Mapped[int] = mapped_column(Integer)  # last turn the startup is open
+
+
+class StartupTurn(Base):
+    """Fixed, predetermined numbers for one startup in one turn."""
+    __tablename__ = "startup_turns"
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), primary_key=True)
+    turn: Mapped[int] = mapped_column(Integer, primary_key=True)
+    buy_price: Mapped[int] = mapped_column(Integer, default=10)
+    profit: Mapped[int] = mapped_column(Integer)  # profit per share, paid at turn end
+
+
+class News(Base):
+    __tablename__ = "news"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), index=True)
+    turn: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+
+
+class Insider(Base):
+    __tablename__ = "insiders"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), index=True)
+    turn: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+
+
+# ---------------------------------------------------------------- game instance
+class Game(Base):
     __tablename__ = "games"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room_code: Mapped[str] = mapped_column(String(8), unique=True)
+    phase: Mapped[str] = mapped_column(String(12), default="LOBBY")  # LOBBY|TURN|RESULTS|FINISHED
+    turn_no: Mapped[int] = mapped_column(Integer, default=0)
+    turns_total: Mapped[int] = mapped_column(Integer)
+    turn_seconds: Mapped[int] = mapped_column(Integer)
+    results_seconds: Mapped[int] = mapped_column(Integer, default=15)
+    starting_capital: Mapped[int] = mapped_column(Integer, default=600)
+    insider_cost: Mapped[int] = mapped_column(Integer, default=30)
+    min_teams: Mapped[int] = mapped_column(Integer, default=2)
+    phase_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    countdown_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    phase_changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    room_code: Mapped[str] = mapped_column(String(6), unique=True, index=True)
-    status: Mapped[GameStatus] = mapped_column(
-        SqlEnum(GameStatus, native_enum=False, length=20),
-        default=GameStatus.LOBBY
-    )
 
-    current_round: Mapped[int] = mapped_column(default=0)
-    total_rounds: Mapped[int] = mapped_column(default=5)
-    round_duration_mins: Mapped[int] = mapped_column(default=10)
-    starting_capital: Mapped[int] = mapped_column(default=600)
-
-    state_end_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-    teams: Mapped[List["Team"]] = relationship(
-        back_populates="game",
-        cascade="all, delete-orphan"
-    )
-    startups: Mapped[List["Startup"]] = relationship(
-        back_populates="game",
-        cascade="all, delete-orphan"
-    )
-    news_pool: Mapped[List["News"]] = relationship(
-        back_populates="game",
-        cascade="all, delete-orphan"
-    )
-    insider_pool: Mapped[List["Insider"]] = relationship(
-        back_populates="game",
-        cascade="all, delete-orphan"
-    )
+class GameStartup(Base):
+    __tablename__ = "game_startups"
+    game_id: Mapped[int] = mapped_column(_cascade("games"), primary_key=True)
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), primary_key=True)
 
 
 class Team(Base):
     __tablename__ = "teams"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
-    name: Mapped[str] = mapped_column(String(50))
-    cash: Mapped[int]
-    is_ready: Mapped[bool] = mapped_column(default=False)
-    session_token: Mapped[str] = mapped_column(String(100), unique=True)
-
-    game: Mapped["Game"] = relationship(
-        back_populates="teams"
-    )
-    portfolios: Mapped[List["Portfolio"]] = relationship(
-        back_populates="team",
-        cascade="all, delete-orphan"
-    )
-    bought_insiders: Mapped[List["TeamInsider"]] = relationship(     
-        back_populates="team",
-        cascade="all, delete-orphan"
-    )
+    __table_args__ = (UniqueConstraint("game_id", "name", name="uq_team_name_per_game"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    game_id: Mapped[int] = mapped_column(_cascade("games"), index=True)
+    name: Mapped[str] = mapped_column(String(30))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # sha256 of the token
+    cash: Mapped[int] = mapped_column(Integer)
+    ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
-class Startup(Base):
-    __tablename__ = "startups"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
-    name: Mapped[str] = mapped_column(String(100))
-    description: Mapped[str] = mapped_column(String)
-    current_price: Mapped[int] = mapped_column(default=10)
-
-    game: Mapped["Game"] = relationship(
-        back_populates="startups"
-    )
-    portfolios: Mapped[List["Portfolio"]] = relationship(
-        back_populates="startup",
-        cascade="all, delete-orphan"
-    )
-    news: Mapped[List["News"]] = relationship(
-        back_populates="startup",
-        cascade="all, delete-orphan"
-    )
-    insiders: Mapped[List["Insider"]] = relationship(
-        back_populates="startup",
-        cascade="all, delete-orphan"
-    )
-
-
-class Portfolio(Base):
-    """Таблица-связка: сколько акций конкретного стартапа у конкретной команды"""
-    __tablename__ = "portfolios"
-
-    team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"), primary_key=True)
-    startup_id: Mapped[int] = mapped_column(ForeignKey("startups.id"), primary_key=True)
-    shares: Mapped[int] = mapped_column(default=0)
-
-    team: Mapped["Team"] = relationship(
-        back_populates="portfolios"
-    )
-    startup: Mapped["Startup"] = relationship(
-        back_populates="portfolios"
-    )
-
-
-class News(Base):
-    __tablename__ = "news_pool"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
-    startup_id: Mapped[int] = mapped_column(ForeignKey("startups.id"))
-    text: Mapped[str] = mapped_column(String)
-    multiplier: Mapped[float] = mapped_column(Float)
-    is_used: Mapped[bool] = mapped_column(default=False)
-
-    game: Mapped["Game"] = relationship(
-        back_populates="news_pool"
-    )
-    startup: Mapped["Startup"] = relationship(
-        back_populates="news"
-    )
-
-
-class Insider(Base):
-    __tablename__ = "insider_pool"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
-    startup_id: Mapped[int] = mapped_column(ForeignKey("startups.id"))
-    text: Mapped[str] = mapped_column(String)
-
-    game: Mapped["Game"] = relationship(
-        back_populates="insider_pool"
-    )
-    startup: Mapped["Startup"] = relationship(
-        back_populates="insiders"
-    )
+class Holding(Base):
+    __tablename__ = "holdings"
+    team_id: Mapped[int] = mapped_column(_cascade("teams"), primary_key=True)
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), primary_key=True)
+    shares: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class TeamInsider(Base):
-    """История, кто какие инсайды купил, чтобы не выдавать дубликаты"""
+    """An insider tip a team has bought. The primary key makes each tip one-per-team."""
     __tablename__ = "team_insiders"
+    team_id: Mapped[int] = mapped_column(_cascade("teams"), primary_key=True)
+    insider_id: Mapped[int] = mapped_column(_cascade("insiders"), primary_key=True)
+    purchased_turn: Mapped[int] = mapped_column(Integer)
 
-    team_id: Mapped[int] = mapped_column(
-        ForeignKey("teams.id"),
-        primary_key=True
-    )
-    insider_id: Mapped[int] = mapped_column(
-        ForeignKey("insider_pool.id"),
-        primary_key=True
-    )
 
-    team: Mapped["Team"] = relationship(
-        back_populates="bought_insiders"
-    )
+class Snapshot(Base):
+    """A team's position after a turn is resolved (turn 0 = the starting position)."""
+    __tablename__ = "snapshots"
+    team_id: Mapped[int] = mapped_column(_cascade("teams"), primary_key=True)
+    turn_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cash: Mapped[int] = mapped_column(Integer)
+    shares_value: Mapped[int] = mapped_column(Integer)
+    score: Mapped[int] = mapped_column(Integer)  # capital minus starting capital
+    rank: Mapped[int] = mapped_column(Integer)

@@ -1,16 +1,13 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import os
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://game_admin:super_secret_password@db:5432/invest_game"
-)
+from config import database_url
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# No built-in credentials: everything comes from the environment (.env).
+engine = create_engine(database_url(os.environ), pool_pre_ping=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
