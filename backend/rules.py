@@ -1,12 +1,16 @@
-"""Pure game rules. No database, no framework: everything here can be unit-tested
-with the standard library only (see tests/test_rules.py)."""
+"""Pure game rules (the Excel model). No database, no framework: everything here can be
+unit-tested with the standard library only (see tests/).
+
+Prices: every startup has prices P1..P(L+1), where L is the last turn it is open.
+In turn t players trade at P(t). When turn t ends, P(t+1) is revealed and every share is
+worth that much. After the last turn the shares are worth the final price."""
 import random
 import re
 from datetime import datetime
+from typing import Optional
 
 ROOM_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # no 0/O, 1/I/L
 ROOM_CODE_LENGTH = 5
-DEFAULT_BUY_PRICE = 10
 
 
 def make_room_code(rng: random.Random) -> str:
@@ -28,35 +32,53 @@ def rank_scores(scores: dict) -> dict:
     return ranks
 
 
-def holdings_value(holdings: dict, prices: dict) -> int:
-    return sum(shares * prices.get(sid, 0) for sid, shares in holdings.items())
+def insider_cost(turn: int, costs: tuple) -> int:
+    """Price of an insider tip in a turn; the last listed price repeats."""
+    return costs[min(max(turn, 1), len(costs)) - 1]
+
+
+def price_at(info: dict, step: Optional[int]) -> Optional[int]:
+    """Price of one startup at a step (1..L+1), or None."""
+    if step is None:
+        return None
+    return info["prices"].get(step)
+
+
+def trading_price(info: dict, turn: int) -> Optional[int]:
+    """The price at which the startup can be traded in `turn`; None once it is closed."""
+    if turn > info["last_turn"]:
+        return None
+    return info["prices"].get(turn)
+
+
+def holdings_value(holdings: dict, startups: dict, step: int) -> int:
+    """Shares valued at the prices of `step`. A startup with no price at that step
+    (it closed earlier) is valued at its final price."""
+    total = 0
+    for sid, shares in holdings.items():
+        info = startups[sid]
+        price = info["prices"].get(step, info["prices"][info["last_turn"] + 1])
+        total += shares * price
+    return total
 
 
 def resolve_turn(cash: int, holdings: dict, turn: int, startups: dict):
-    """Pay out the profit of `turn` and redeem shares of startups that close with it.
+    """Close `turn`: shares of startups whose story ends are sold at their final price,
+    the rest are valued at the newly revealed price P(turn+1).
 
-    startups: {startup_id: {"last_turn": int, "turns": {turn: (buy_price, profit)}}}
-    Returns (new_cash, new_holdings, shares_value) where shares_value is valued at
-    this turn's buy prices.
+    startups: {startup_id: {"last_turn": L, "prices": {step: price}}}
+    Returns (new_cash, new_holdings, shares_value).
     """
     new_holdings = {}
-    prices = {}
     for sid, shares in holdings.items():
         if shares <= 0:
             continue
         info = startups[sid]
-        if turn > info["last_turn"]:  # defensive: should not happen
-            price, _ = info["turns"][info["last_turn"]]
-            cash += shares * price
-            continue
-        price, profit = info["turns"][turn]
-        cash += shares * profit
-        if turn == info["last_turn"]:
-            cash += shares * price  # the startup is closed: shares are redeemed
+        if turn >= info["last_turn"]:
+            cash += shares * info["prices"][info["last_turn"] + 1]
         else:
             new_holdings[sid] = shares
-            prices[sid] = price
-    return cash, new_holdings, holdings_value(new_holdings, prices)
+    return cash, new_holdings, holdings_value(new_holdings, startups, turn + 1)
 
 
 def effective_turns(requested: int, last_turns: list) -> int:
@@ -86,13 +108,17 @@ def pick_insider(candidates: list, rng: random.Random):
 _SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 
 
+def _whole(value) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def validate_pack(pack) -> list:
     """Validate a content pack and return the list of startup dicts.
 
     {"startups": [{"slug", "name", "description",
-                   "turns": [{"turn": 1, "profit": 3, "buy_price": 10?}, ...],
-                   "news": [{"turn": 2, "text": "..."}],
-                   "insiders": [{"turn": 2, "text": "..."}]}]}
+                   "prices": [10, 41, 86, 9],            # P1..P(L+1), whole numbers
+                   "news":     [{"turn": 2, "text": "..."}],   # turns 2..L
+                   "insiders": [{"turn": 1, "text": "..."}]}]} # turns 1..L
     """
     if not isinstance(pack, dict) or not isinstance(pack.get("startups"), list):
         raise ValueError('pack must be {"startups": [...]}')
@@ -114,34 +140,29 @@ def validate_pack(pack) -> list:
         for field in ("name", "description"):
             if not isinstance(s.get(field), str) or not s[field].strip():
                 raise ValueError(f"{where}: {field} is required")
-        turns = s.get("turns")
-        if not isinstance(turns, list) or not turns:
-            raise ValueError(f"{where}: turns must be a non-empty list")
-        for n, t in enumerate(turns, start=1):
-            if not isinstance(t, dict) or t.get("turn") != n:
-                raise ValueError(f"{where}: turns must be numbered 1..N in order")
-            profit = t.get("profit")
-            price = t.get("buy_price", DEFAULT_BUY_PRICE)
-            if not isinstance(profit, int) or isinstance(profit, bool) or profit < 0:
-                raise ValueError(f"{where}, turn {n}: profit must be a whole number >= 0")
-            if not isinstance(price, int) or isinstance(price, bool) or price <= 0:
-                raise ValueError(f"{where}, turn {n}: buy_price must be a whole number > 0")
-        last_turn = len(turns)
-        for kind in ("news", "insiders"):
+        prices = s.get("prices")
+        if not isinstance(prices, list) or len(prices) < 2:
+            raise ValueError(f"{where}: prices needs at least 2 values (start and end price)")
+        for n, price in enumerate(prices, start=1):
+            if not _whole(price) or price < 0:
+                raise ValueError(f"{where}, price {n}: must be a whole number >= 0")
+        if prices[0] < 1:
+            raise ValueError(f"{where}: the first price must be at least 1")
+        last_turn = len(prices) - 1
+        for kind, first in (("news", 2), ("insiders", 1)):
             for item in s.get(kind, []):
                 if (not isinstance(item, dict) or not isinstance(item.get("text"), str)
                         or not item["text"].strip()):
                     raise ValueError(f"{where}: every {kind} item needs text")
                 turn = item.get("turn")
-                if not isinstance(turn, int) or not 2 <= turn <= last_turn:
+                if not _whole(turn) or not first <= turn <= last_turn:
                     raise ValueError(
-                        f"{where}: {kind} turn must be between 2 and {last_turn}")
+                        f"{where}: {kind} turn must be between {first} and {last_turn}")
         out.append({
             "slug": slug,
             "name": s["name"].strip(),
             "description": s["description"].strip(),
-            "turns": [{"turn": t["turn"], "profit": t["profit"],
-                       "buy_price": t.get("buy_price", DEFAULT_BUY_PRICE)} for t in turns],
+            "prices": list(prices),
             "news": [{"turn": n["turn"], "text": n["text"].strip()} for n in s.get("news", [])],
             "insiders": [{"turn": n["turn"], "text": n["text"].strip()}
                          for n in s.get("insiders", [])],

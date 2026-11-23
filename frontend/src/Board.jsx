@@ -1,7 +1,21 @@
-import { api } from './api.js';
 import Chart from './Chart.jsx';
-import { formatClock, startupColor, useCountdown, usePoll } from './hooks.js';
+import { PHASE } from './constants.js';
+import PriceList from './PriceList.jsx';
+import QrCode from './QrCode.jsx';
+import {
+  api, displayAddress, isLocalOnly, playerUrl, useCountdown, usePoll, useServerAddress,
+} from './connection/index.js';
+import { formatClock, startupColor } from './ui.js';
 import { t } from './strings.js';
+
+function LeaveBoard({ phase }) {
+  const leave = () => {
+    const running = phase === PHASE.TURN || phase === PHASE.RESULTS;
+    if (running && !window.confirm(t('leaveBoardConfirm'))) return;
+    window.location.assign('/');
+  };
+  return <button className="leave-board" onClick={leave}>{t('leaveBoard')}</button>;
+}
 
 export default function Board({ code }) {
   const [board, , error] = usePoll(() => api.board(code), 1500, [code]);
@@ -9,15 +23,21 @@ export default function Board({ code }) {
   if (!board) {
     const message = error?.status === 404 ? t('gameNotFound')
       : error ? t('connectionLost') : t('loading');
-    return <div className="board board-center"><p className="board-message">{message}</p></div>;
+    return (
+      <div className="board board-center">
+        <p className="board-message">{message}</p>
+        <LeaveBoard phase={PHASE.LOBBY} />
+      </div>
+    );
   }
   return (
     <div className="board">
+      <LeaveBoard phase={board.phase} />
       {error && <div className="banner" role="status">{t('connectionLost')}</div>}
-      {board.phase === 'LOBBY' && <Lobby board={board} />}
-      {board.phase === 'TURN' && <TurnView board={board} />}
-      {board.phase === 'RESULTS' && <ResultsView board={board} />}
-      {board.phase === 'FINISHED' && <FinalView board={board} />}
+      {board.phase === PHASE.LOBBY && <Lobby board={board} />}
+      {board.phase === PHASE.TURN && <TurnView board={board} />}
+      {board.phase === PHASE.RESULTS && <ResultsView board={board} />}
+      {board.phase === PHASE.FINISHED && <FinalView board={board} />}
     </div>
   );
 }
@@ -38,25 +58,33 @@ function TeamStrip({ teams }) {
 
 function Lobby({ board }) {
   const left = useCountdown(board.countdown_ends_at, board.server_time);
+  const base = useServerAddress();
   const counting = board.countdown_ends_at && left !== null;
   let status = t('waitingReady');
   if (board.teams.length < board.min_teams) status = t('needTeams', { n: board.min_teams });
   return (
-    <>
-      <main className="lobby">
-        <div>
-          <p className="lobby-join">{t('joinAt')} <strong>{window.location.host}</strong> {t('withCode')}</p>
-          <p className="room-code">{board.room_code}</p>
-          <p className="lobby-status">{counting ? t('startingIn', { n: left }) : status}</p>
+    <main className="lobby">
+      <div className="lobby-main">
+        <div className="join-row">
+          <div className="qr-tile">
+            <QrCode text={playerUrl(base, board.room_code)} label={t('scanToJoin')} />
+          </div>
+          <div className="join-text">
+            <p className="lobby-join">{t('scanToJoin')}</p>
+            <p className="room-code">{board.room_code}</p>
+            <p className="lobby-join">{t('orOpen', { address: displayAddress(base) })}</p>
+          </div>
         </div>
-        <div className="lobby-teams">
-          <h2>{t('teamsJoined')}</h2>
-          {board.teams.length === 0
-            ? <p className="muted">{t('noTeamsYet')}</p>
-            : <TeamStrip teams={board.teams} />}
-        </div>
-      </main>
-    </>
+        {isLocalOnly(base) && <p className="banner" role="status">{t('localOnlyHint')}</p>}
+        <p className="lobby-status">{counting ? t('startingIn', { n: left }) : status}</p>
+      </div>
+      <div className="lobby-teams">
+        <h2>{t('teamsJoined')}</h2>
+        {board.teams.length === 0
+          ? <p className="muted">{t('noTeamsYet')}</p>
+          : <TeamStrip teams={board.teams} />}
+      </div>
+    </main>
   );
 }
 
@@ -65,17 +93,18 @@ function StartupPanel({ startup, index, turnNo }) {
   return (
     <article className={`startup-panel ${startup.open ? '' : 'is-closed'}`}
       style={{ '--accent': startupColor(index) }}>
-      <h2>{startup.name}</h2>
+      <header className="startup-head">
+        <h2>{startup.name}</h2>
+        {startup.price != null && (
+          <p className="price-tag">
+            <span>{t('priceShort')}</span>
+            <strong className="tnum">{startup.price}</strong>
+          </p>
+        )}
+      </header>
       {startup.open
         ? <p className="startup-body">{body}</p>
         : <p className="startup-body muted">{t('closedText')}</p>}
-      {startup.profits.length > 0 && (
-        <ul className="chips" aria-label={t('profitHistory')}>
-          {startup.profits.map((p) => (
-            <li key={p.turn}><small>{t('turnShort', { n: p.turn })}</small> +{p.profit}</li>
-          ))}
-        </ul>
-      )}
     </article>
   );
 }
@@ -135,19 +164,8 @@ function ResultsView({ board }) {
       </header>
       <main className="results-grid">
         <section>
-          <h2>{t('profitPerShare')}</h2>
-          <ul className="profit-list">
-            {board.startups.map((s, i) => {
-              const point = s.profits.find((p) => p.turn === board.turn_no);
-              return (
-                <li key={s.id} style={{ '--accent': startupColor(i) }}>
-                  <span className="profit-name">{s.name}</span>
-                  {point ? <span className="profit-value">+{point.profit}</span>
-                    : <span className="profit-value muted">{t('closed')}</span>}
-                </li>
-              );
-            })}
-          </ul>
+          <h2>{t('newPrices')}</h2>
+          <PriceList startups={board.startups} />
         </section>
         <section>
           <h2>{t('ranking')}</h2>
@@ -176,6 +194,10 @@ function FinalView({ board }) {
           {board.chart && <Chart turns={board.chart.turns} series={board.chart.series} />}
         </section>
       </main>
+      <section className="final-prices">
+        <h2>{t('finalPrices')}</h2>
+        <PriceList startups={board.startups} variant="strip" />
+      </section>
     </>
   );
 }

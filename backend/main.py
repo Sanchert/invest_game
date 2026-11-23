@@ -11,18 +11,21 @@ from fastapi import Body, Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-import engine as game_engine
+import game as game_engine
 import models  # noqa: F401  (registers the tables)
 import rules
 from database import Base, engine as db_engine, get_db
-from engine import GameError
-from schemas import (BoardOut, CreateGameIn, CreateGameOut, InsiderBought, JoinIn,
+from constants import ErrorCode
+from game import GameError
+from config import public_url
+from schemas import (BoardOut, ConfigOut, CreateGameIn, CreateGameOut, InsiderBought, JoinIn,
                      JoinOut, MeOut, TradeIn)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("invest")
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
+PUBLIC_URL = public_url(os.environ)
 CONTENT_DIR = Path(__file__).parent / "content"
 
 
@@ -63,7 +66,7 @@ def _rate_limit_create(ip: str, limit: int = 10, window: int = 60) -> None:
     now = time.monotonic()
     hits = [h for h in _create_hits.get(ip, []) if now - h < window]
     if len(hits) >= limit:
-        raise GameError("rate_limited", "Too many games created. Try again in a minute.", 429)
+        raise GameError(ErrorCode.RATE_LIMITED, "Too many games created. Try again in a minute.", 429)
     hits.append(now)
     _create_hits[ip] = hits
 
@@ -74,6 +77,11 @@ TeamToken = Header(default=None, alias="X-Team-Token")
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/config", response_model=ConfigOut)
+def client_config():
+    return ConfigOut(public_url=PUBLIC_URL)
 
 
 @app.post("/api/games", response_model=CreateGameOut)
@@ -100,7 +108,7 @@ def join(code: str, body: JoinIn, db: Session = Depends(get_db)):
 def me(code: str, token: Optional[str] = TeamToken, db: Session = Depends(get_db)):
     game = game_engine.get_game_by_code(db, code)
     team = game_engine.team_by_token(db, game, token)
-    game_engine.heartbeat(db, team.id)
+    game_engine.heartbeat(team.id)
     return game_engine.build_me(db, game, team)
 
 
@@ -134,11 +142,11 @@ def import_content(payload: dict = Body(...),
                    x_admin_key: str = Header(default="", alias="X-Admin-Key"),
                    db: Session = Depends(get_db)):
     if not ADMIN_KEY:
-        raise GameError("admin_disabled", "Set ADMIN_KEY to enable content import.", 503)
+        raise GameError(ErrorCode.ADMIN_DISABLED, "Set ADMIN_KEY to enable content import.", 503)
     if not secrets.compare_digest(x_admin_key.encode(), ADMIN_KEY.encode()):
-        raise GameError("forbidden", "Wrong admin key.", 403)
+        raise GameError(ErrorCode.FORBIDDEN, "Wrong admin key.", 403)
     try:
         startups = rules.validate_pack(payload)
     except ValueError as exc:
-        raise GameError("invalid_pack", str(exc), 422)
+        raise GameError(ErrorCode.INVALID_PACK, str(exc), 422)
     return game_engine.import_pack(db, startups)

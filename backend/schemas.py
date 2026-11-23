@@ -1,6 +1,8 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
+
+from constants import Phase
 
 
 class CreateGameIn(BaseModel):
@@ -55,20 +57,15 @@ class BoardTeam(BaseModel):
     score: Optional[int] = None   # only in FINISHED
 
 
-class ProfitPoint(BaseModel):
-    turn: int
-    profit: int
-
-
 class BoardStartup(BaseModel):
     id: int
     name: str
     description: str
     open: bool
     last_turn: int
-    price: Optional[int] = None
+    price: Optional[int] = None       # trading price (turn) or the newly revealed price (results)
+    prev_price: Optional[int] = None  # results only: the price before the turn ended
     news: Optional[str] = None
-    profits: List[ProfitPoint]
 
 
 class ChartSeries(BaseModel):
@@ -83,7 +80,7 @@ class Chart(BaseModel):
 
 class BoardOut(BaseModel):
     room_code: str
-    phase: str
+    phase: Phase
     turn_no: int
     turns_total: int
     turn_seconds: int
@@ -126,6 +123,10 @@ class MeOut(BaseModel):
 class InsiderBought(BaseModel):
     insider: InsiderOut
     me: MeOut
+
+
+class ConfigOut(BaseModel):
+    public_url: Optional[str] = None   # where players should go, if the server knows it
 
 
 class ErrorOut(BaseModel):

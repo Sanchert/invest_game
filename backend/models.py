@@ -5,6 +5,7 @@ from sqlalchemy import (Boolean, DateTime, ForeignKey, Integer, String, Text,
                         UniqueConstraint)
 from sqlalchemy.orm import Mapped, mapped_column
 
+from constants import Phase
 from database import Base
 
 
@@ -23,16 +24,16 @@ class Startup(Base):
     slug: Mapped[str] = mapped_column(String(64), unique=True)
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text)
-    last_turn: Mapped[int] = mapped_column(Integer)  # last turn the startup is open
+    last_turn: Mapped[int] = mapped_column(Integer)  # last turn the startup is open (prices: 1..last_turn+1)
 
 
-class StartupTurn(Base):
-    """Fixed, predetermined numbers for one startup in one turn."""
-    __tablename__ = "startup_turns"
+class StartupPrice(Base):
+    """Price of one share at a step: step t is the price in turn t, the last step is the
+    final price. A startup open for L turns has L + 1 prices."""
+    __tablename__ = "startup_prices"
     startup_id: Mapped[int] = mapped_column(_cascade("startups"), primary_key=True)
-    turn: Mapped[int] = mapped_column(Integer, primary_key=True)
-    buy_price: Mapped[int] = mapped_column(Integer, default=10)
-    profit: Mapped[int] = mapped_column(Integer)  # profit per share, paid at turn end
+    step: Mapped[int] = mapped_column(Integer, primary_key=True)
+    price: Mapped[int] = mapped_column(Integer)
 
 
 class News(Base):
@@ -56,14 +57,10 @@ class Game(Base):
     __tablename__ = "games"
     id: Mapped[int] = mapped_column(primary_key=True)
     room_code: Mapped[str] = mapped_column(String(8), unique=True)
-    phase: Mapped[str] = mapped_column(String(12), default="LOBBY")  # LOBBY|TURN|RESULTS|FINISHED
+    phase: Mapped[str] = mapped_column(String(12), default=Phase.LOBBY.value)
     turn_no: Mapped[int] = mapped_column(Integer, default=0)
     turns_total: Mapped[int] = mapped_column(Integer)
     turn_seconds: Mapped[int] = mapped_column(Integer)
-    results_seconds: Mapped[int] = mapped_column(Integer, default=15)
-    starting_capital: Mapped[int] = mapped_column(Integer, default=600)
-    insider_cost: Mapped[int] = mapped_column(Integer, default=30)
-    min_teams: Mapped[int] = mapped_column(Integer, default=2)
     phase_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     countdown_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -85,8 +82,6 @@ class Team(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # sha256 of the token
     cash: Mapped[int] = mapped_column(Integer)
     ready: Mapped[bool] = mapped_column(Boolean, default=False)
-    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class Holding(Base):
@@ -97,11 +92,11 @@ class Holding(Base):
 
 
 class TeamInsider(Base):
-    """An insider tip a team has bought. The primary key makes each tip one-per-team."""
+    """An insider tip a team has bought. The primary key makes each tip one-per-team;
+    the turn it belongs to is the insider's own `turn`."""
     __tablename__ = "team_insiders"
     team_id: Mapped[int] = mapped_column(_cascade("teams"), primary_key=True)
     insider_id: Mapped[int] = mapped_column(_cascade("insiders"), primary_key=True)
-    purchased_turn: Mapped[int] = mapped_column(Integer)
 
 
 class Snapshot(Base):

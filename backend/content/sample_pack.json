@@ -1,356 +1,177 @@
 {
   "startups": [
     {
-      "slug": "skyline-drones",
-      "name": "Skyline Drones",
-      "description": "Delivers parcels across the city with a fleet of small autonomous drones. Founded by two ex-airline engineers.",
-      "turns": [
-        {
-          "turn": 1,
-          "profit": 2
-        },
-        {
-          "turn": 2,
-          "profit": 4
-        },
-        {
-          "turn": 3,
-          "profit": 7
-        },
-        {
-          "turn": 4,
-          "profit": 9
-        }
+      "slug": "morfeus",
+      "name": "Морфеус",
+      "description": "[Заглушка] Описание стартапа «Морфеус»: замените текстом из вашего PDF.",
+      "prices": [
+        10,
+        41,
+        86,
+        9
       ],
       "news": [
         {
           "turn": 2,
-          "text": "The regulator opens a pilot air corridor for delivery drones."
+          "text": "[Заглушка] Новости хорошие: аналитики ждут подорожания акций."
         },
         {
           "turn": 3,
-          "text": "A rival's drone crashes into a stadium and the press demands stricter rules. Skyline's fleet is untouched."
-        },
-        {
-          "turn": 4,
-          "text": "Skyline is shortlisted for a national supermarket contract."
+          "text": "[Заглушка] Новости тревожные: аналитики ждут падения акций."
         }
       ],
       "insiders": [
         {
-          "turn": 2,
-          "text": "The pilot corridor is fully booked: expect profit per share to roughly double."
+          "turn": 1,
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 4,1 раза."
         },
         {
           "turn": 2,
-          "text": "A partner retailer has tripled its drone order for the quarter."
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 2,1 раза."
         },
         {
           "turn": 3,
-          "text": "Stricter rules will hit the rivals harder. Expect a solid rise of about three."
-        },
-        {
-          "turn": 3,
-          "text": "Two large retailers are switching to Skyline this turn."
-        },
-        {
-          "turn": 4,
-          "text": "The supermarket deal is signed, but deliveries start late. Only a small rise of about two."
-        },
-        {
-          "turn": 4,
-          "text": "Insiders say the contract is worth around two extra units per share."
+          "text": "[Заглушка] Инсайд: цена акций упадёт примерно на 90%."
         }
       ]
     },
     {
-      "slug": "bloodsense",
-      "name": "BloodSense",
-      "description": "A pocket device that analyses your blood from a single finger prick and sends the result to your phone.",
-      "turns": [
-        {
-          "turn": 1,
-          "profit": 4
-        },
-        {
-          "turn": 2,
-          "profit": 9
-        },
-        {
-          "turn": 3,
-          "profit": 6
-        },
-        {
-          "turn": 4,
-          "profit": 0
-        }
+      "slug": "millenium",
+      "name": "Миллениум",
+      "description": "[Заглушка] Описание стартапа «Миллениум»: замените текстом из вашего PDF.",
+      "prices": [
+        10,
+        45,
+        38,
+        15
       ],
       "news": [
         {
           "turn": 2,
-          "text": "Tech blogs call the finger-prick analyser a breakthrough. Pre-orders are exploding."
+          "text": "[Заглушка] Новости спокойные: заметных изменений не ожидается."
         },
         {
           "turn": 3,
-          "text": "A hospital study questions how accurate the sensor really is."
-        },
-        {
-          "turn": 4,
-          "text": "The health regulator announces an investigation into BloodSense."
+          "text": "[Заглушка] Новости тревожные: аналитики ждут падения акций."
         }
       ],
       "insiders": [
         {
+          "turn": 1,
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 4,5 раза."
+        },
+        {
           "turn": 2,
-          "text": "Pre-orders are far above plan: expect a jump of about five."
+          "text": "[Заглушка] Инсайд: цена акций упадёт примерно на 16%."
         },
         {
           "turn": 3,
-          "text": "The test results are much worse than the company admits. Expect a clear drop of about three."
-        },
-        {
-          "turn": 3,
-          "text": "Several clinics are quietly cancelling their orders."
-        },
-        {
-          "turn": 4,
-          "text": "A sales halt is coming. The company will earn nothing this turn."
-        },
-        {
-          "turn": 4,
-          "text": "Investors are pulling out. The profit will fall to zero."
+          "text": "[Заглушка] Инсайд: цена акций упадёт примерно на 61%."
         }
       ]
     },
     {
-      "slug": "greencrate",
-      "name": "GreenCrate",
-      "description": "A weekly subscription box of seasonal vegetables from local farms, delivered in reusable crates.",
-      "turns": [
-        {
-          "turn": 1,
-          "profit": 3
-        },
-        {
-          "turn": 2,
-          "profit": 3
-        },
-        {
-          "turn": 3,
-          "profit": 4
-        },
-        {
-          "turn": 4,
-          "profit": 4
-        }
+      "slug": "bladework",
+      "name": "Блейдворк",
+      "description": "[Заглушка] Описание стартапа «Блейдворк»: замените текстом из вашего PDF.",
+      "prices": [
+        10,
+        25,
+        30,
+        0
       ],
       "news": [
         {
           "turn": 2,
-          "text": "A quiet quarter: subscriptions hold steady."
+          "text": "[Заглушка] Новости спокойные: заметных изменений не ожидается."
         },
         {
           "turn": 3,
-          "text": "A well-received ad campaign brings in a few new subscribers."
-        },
-        {
-          "turn": 4,
-          "text": "Two competitors copy the idea, but loyal customers stay."
+          "text": "[Заглушка] Новости тревожные: аналитики ждут падения акций."
         }
       ],
       "insiders": [
         {
+          "turn": 1,
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 2,5 раза."
+        },
+        {
           "turn": 2,
-          "text": "No surprises: profit stays exactly where it was."
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно на 20%."
         },
         {
           "turn": 3,
-          "text": "Sign-ups are up modestly. Expect a rise of one."
-        },
-        {
-          "turn": 4,
-          "text": "Profit stays flat as the new competitors take a few customers."
-        },
-        {
-          "turn": 4,
-          "text": "Nothing dramatic: the same profit as last turn."
+          "text": "[Заглушка] Инсайд: цена акций упадёт до нуля."
         }
       ]
     },
     {
-      "slug": "pixelpals",
-      "name": "PixelPals",
-      "description": "An indie studio building a cosy online game where players raise tiny digital pets.",
-      "turns": [
-        {
-          "turn": 1,
-          "profit": 1
-        },
-        {
-          "turn": 2,
-          "profit": 6
-        },
-        {
-          "turn": 3,
-          "profit": 2
-        },
-        {
-          "turn": 4,
-          "profit": 7
-        }
+      "slug": "fotostok",
+      "name": "Фотосток",
+      "description": "[Заглушка] Описание стартапа «Фотосток»: замените текстом из вашего PDF.",
+      "prices": [
+        10,
+        25,
+        30,
+        50
       ],
       "news": [
         {
           "turn": 2,
-          "text": "A teaser trailer goes viral and the waiting list passes a million."
+          "text": "[Заглушка] Новости спокойные: заметных изменений не ожидается."
         },
         {
           "turn": 3,
-          "text": "The launch is buggy and reviews are harsh."
-        },
-        {
-          "turn": 4,
-          "text": "A big patch and a free expansion win players back."
+          "text": "[Заглушка] Новости хорошие: аналитики ждут подорожания акций."
         }
       ],
       "insiders": [
         {
+          "turn": 1,
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 2,5 раза."
+        },
+        {
           "turn": 2,
-          "text": "Expect a big jump of about five as the waiting list converts to buyers."
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно на 20%."
         },
         {
           "turn": 3,
-          "text": "Servers are crashing under load. Expect a fall of about four."
-        },
-        {
-          "turn": 3,
-          "text": "Refund requests are piling up."
-        },
-        {
-          "turn": 4,
-          "text": "The expansion is a hit: expect a rise of about five."
-        },
-        {
-          "turn": 4,
-          "text": "Players are returning in large numbers."
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно на 67%."
         }
       ]
     },
     {
-      "slug": "nanofarm",
-      "name": "NanoFarm",
-      "description": "Vertical farms inside empty city warehouses, growing salad leaves under LED light.",
-      "turns": [
-        {
-          "turn": 1,
-          "profit": 2
-        },
-        {
-          "turn": 2,
-          "profit": 2
-        },
-        {
-          "turn": 3,
-          "profit": 6
-        },
-        {
-          "turn": 4,
-          "profit": 8
-        }
+      "slug": "afina",
+      "name": "Афина",
+      "description": "[Заглушка] Описание стартапа «Афина»: замените текстом из вашего PDF.",
+      "prices": [
+        10,
+        25,
+        30,
+        50
       ],
       "news": [
         {
           "turn": 2,
-          "text": "Construction delays push the first harvest back."
+          "text": "[Заглушка] Новости спокойные: заметных изменений не ожидается."
         },
         {
           "turn": 3,
-          "text": "The first harvest sells out within a week."
-        },
-        {
-          "turn": 4,
-          "text": "Two restaurant chains sign long-term supply deals."
+          "text": "[Заглушка] Новости хорошие: аналитики ждут подорожания акций."
         }
       ],
       "insiders": [
-        {
-          "turn": 2,
-          "text": "The delay costs nothing yet: profit stays the same."
-        },
-        {
-          "turn": 3,
-          "text": "Demand is far above supply. Expect a jump of about four."
-        },
-        {
-          "turn": 3,
-          "text": "Buyers are queuing for the first crates."
-        },
-        {
-          "turn": 4,
-          "text": "Supply deals add roughly two units per share."
-        },
-        {
-          "turn": 4,
-          "text": "A modest rise: the new contracts only start late in the turn."
-        }
-      ]
-    },
-    {
-      "slug": "safelock",
-      "name": "SafeLock Wallet",
-      "description": "A hardware wallet that keeps companies' digital payment keys offline and tamper-proof.",
-      "turns": [
         {
           "turn": 1,
-          "profit": 5
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно в 2,5 раза."
         },
         {
           "turn": 2,
-          "profit": 5
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно на 20%."
         },
         {
           "turn": 3,
-          "profit": 3
-        },
-        {
-          "turn": 4,
-          "profit": 1
-        }
-      ],
-      "news": [
-        {
-          "turn": 2,
-          "text": "A steady quarter with the usual corporate customers."
-        },
-        {
-          "turn": 3,
-          "text": "A rival launches a cheaper alternative."
-        },
-        {
-          "turn": 4,
-          "text": "Several big customers announce they are switching suppliers."
-        }
-      ],
-      "insiders": [
-        {
-          "turn": 2,
-          "text": "Nothing changes: the profit stays the same."
-        },
-        {
-          "turn": 3,
-          "text": "Price pressure is real. Expect a fall of about two."
-        },
-        {
-          "turn": 3,
-          "text": "The rival's product is getting excellent reviews."
-        },
-        {
-          "turn": 4,
-          "text": "The customer losses are larger than the company admits: expect a fall of about two."
-        },
-        {
-          "turn": 4,
-          "text": "Profit will be close to one."
+          "text": "[Заглушка] Инсайд: цена акций вырастет примерно на 67%."
         }
       ]
     }

@@ -1,4 +1,5 @@
-"""Database connection settings. Pure standard library, so it can be unit-tested."""
+"""Settings read from the environment. Pure standard library, so it can be unit-tested."""
+from typing import Optional
 from urllib.parse import quote
 
 
@@ -31,3 +32,27 @@ def database_url(env) -> str:
     raise RuntimeError(
         "Database is not configured. Set POSTGRES_USER, POSTGRES_PASSWORD and "
         "POSTGRES_DB (or DATABASE_URL) in the .env file next to docker-compose.yml.")
+
+
+def describe_env(env) -> str:
+    """A secret-free summary of what the container sees, for error messages."""
+    def state(name):
+        value = _clean(env.get(name))
+        return f"set ({len(value)} characters)" if value else "MISSING or empty"
+    lines = [f"  {name}: {state(name)}" for name in
+             ("POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "DATABASE_URL")]
+    return "\n".join(lines)
+
+
+def public_url(env) -> Optional[str]:
+    """The address players type on their phones, e.g. http://192.168.0.10:8080.
+
+    Set by start.py (it finds the laptop's address) or by hand in .env as PUBLIC_URL.
+    A missing scheme is added; anything that is not http(s) is ignored."""
+    raw = _clean(env.get("PUBLIC_URL"))
+    if not raw:
+        return None
+    if "://" not in raw:
+        raw = "http://" + raw
+    raw = raw.rstrip("/")
+    return raw if raw.lower().startswith(("http://", "https://")) and len(raw) > 8 else None

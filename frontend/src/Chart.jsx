@@ -1,5 +1,5 @@
 import { t } from './strings.js';
-import { STARTUP_COLORS } from './hooks.js';
+import { STARTUP_COLORS } from './ui.js';
 
 /** Line chart of every team's total profit after each turn. Plain SVG, no library. */
 export default function Chart({ turns, series, highlight }) {

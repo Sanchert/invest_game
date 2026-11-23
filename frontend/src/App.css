@@ -98,9 +98,6 @@ button, input { font: inherit; }
 .toast { position: fixed; left: 14px; right: 14px; bottom: 96px; max-width: 532px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; font-weight: 600; z-index: 10; }
 .big-rank { font-size: 4.5rem; font-weight: 800; line-height: 1; color: var(--ink); }
 .big-score { font-size: 2.4rem; font-weight: 800; color: var(--teal); }
-.profit-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 10px 12px; border-left: 6px solid var(--accent); border-bottom: 1px solid var(--line); }
-.profit-name { font-weight: 700; }
-.profit-value { font-weight: 800; font-size: 1.3rem; }
 .rank-list li { display: flex; align-items: baseline; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .rank-no { font-weight: 800; font-size: 1.3rem; width: 2ch; font-variant-numeric: tabular-nums; }
 .rank-name { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
@@ -108,6 +105,9 @@ button, input { font: inherit; }
 .rank-list .is-me { background: #FFF4CC; margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; }
 
 /* ---------- board (projector) ---------- */
+.leave-board { position: fixed; top: .5vw; right: 1vw; z-index: 20; background: none; border: 0; color: #fff;
+  opacity: .45; font-size: .6em; padding: .3em .6em; border-radius: 6px; cursor: pointer; }
+.leave-board:hover, .leave-board:focus-visible { opacity: 1; background: rgba(255, 255, 255, .14); }
 .board { min-height: 100vh; background: var(--ink); color: #fff; display: flex; flex-direction: column; gap: 1.6vw;
   padding: 2vw 3vw; font-size: clamp(14px, 1.45vw, 30px); }
 .board-center { align-items: center; justify-content: center; }
@@ -133,14 +133,16 @@ button, input { font: inherit; }
 .team-strip li { display: flex; align-items: center; gap: .6em; background: var(--ink-3); border-radius: 999px; padding: .35em 1em .35em .8em; font-weight: 700; }
 .team-strip .dot { width: .8em; height: .8em; border-radius: 50%; border: .15em solid rgba(255, 255, 255, .6); }
 .team-strip .is-ready .dot { background: var(--teal); border-color: var(--teal); }
-.lobby { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 4vw; align-items: center; }
-.lobby-join { font-size: 1.6em; }
-.room-code { font-size: 13vw; font-weight: 800; letter-spacing: .12em; line-height: 1; color: var(--coin); }
-.lobby-status { font-size: 2em; font-weight: 700; margin-top: .4em; }
+.lobby { flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 4vw; align-items: center; }
+.join-row { display: flex; align-items: center; gap: 3vw; }
+.qr-tile { flex: none; width: 24vw; padding: .6vw; background: #fff; border-radius: 1.2vw; }
+.qr { display: block; width: 100%; height: auto; }
+.join-text { min-width: 0; }
+.lobby-join { font-size: 1.5em; }
+.room-code { font-size: 7vw; font-weight: 800; letter-spacing: .1em; line-height: 1.05; color: var(--coin); margin: .1em 0; }
+.lobby-status { font-size: 2em; font-weight: 700; margin-top: .8em; }
+.lobby-main .banner { margin-top: 1em; }
 .results-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; align-content: start; }
-.board .profit-list li { border-bottom-color: rgba(255, 255, 255, .15); padding: .5em 0 .5em .8em; border-left-width: .5vw; }
-.board .profit-name { font-size: 1.5em; }
-.board .profit-value { font-size: 2.2em; }
 .board .rank-list li { border-bottom-color: rgba(255, 255, 255, .15); padding: .45em 0; }
 .board .rank-no { font-size: 2em; width: 1.6ch; color: rgba(255, 255, 255, .6); }
 .board .rank-name { font-size: 1.7em; }
@@ -151,7 +153,52 @@ button, input { font: inherit; }
 @media (max-width: 800px) {
   .board { padding: 4vw; font-size: 15px; }
   .lobby, .results-grid { grid-template-columns: 1fr; }
+  .join-row { flex-direction: column; align-items: flex-start; }
+  .qr-tile { width: min(70vw, 340px); }
+  .room-code { font-size: 16vw; }
   .clock { font-size: 18vw; }
   .startup-row { grid-template-columns: 1fr; }
   .startup-panel { padding: 4vw; border-top-width: 6px; }
 }
+
+/* ---------- prices ---------- */
+:root { --up: #00857F; --down: #C93B3B; }
+.price-tag { display: flex; align-items: baseline; gap: .4em; }
+.price-tag span { font-size: .85em; opacity: .7; }
+.price-tag strong { font-size: 1.5em; font-weight: 800; color: var(--ink); }
+.startup-head, .ticket-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; }
+.price-list li { display: flex; justify-content: space-between; align-items: center; gap: 1em; padding: 10px 0 10px 12px;
+  border-left: 6px solid var(--accent); border-bottom: 1px solid var(--line); }
+.price-name { font-weight: 700; }
+.price-move { display: flex; align-items: baseline; gap: .5em; }
+.price-old { opacity: .6; }
+.price-new { font-size: 1.4em; font-weight: 800; }
+.price-delta { font-weight: 800; min-width: 3.2ch; text-align: right; }
+.price-delta.up { color: var(--up); }
+.price-delta.down { color: var(--down); }
+.price-list.strip { display: flex; flex-wrap: wrap; gap: .8em; }
+.price-list.strip li { border-bottom: 0; background: var(--ink-2); border-radius: .8em; padding: .5em 1em; gap: 1.2em; }
+
+.board .price-tag strong { color: var(--coin); font-size: 2.4em; line-height: 1; }
+.board .price-list:not(.strip) li { border-bottom-color: rgba(255, 255, 255, .15); padding: .5em 0 .5em .8em; border-left-width: .5vw; }
+.board .price-name { font-size: 1.5em; }
+.board .price-new { font-size: 2.2em; }
+.board .price-old, .board .price-delta { font-size: 1.3em; }
+.board .price-delta.up { color: #4FE3B0; }
+.board .price-delta.down { color: #FF8C8A; }
+.board .price-list.strip .price-name { font-size: 1.2em; }
+.board .price-list.strip .price-new { font-size: 1.6em; }
+.final-prices h2 { margin-bottom: .5em; }
+.startup-head { flex-direction: column; align-items: flex-start; gap: .25em; }
+.board .price-list.strip { flex-wrap: nowrap; gap: .6em; font-size: .72em; }
+.board .price-list.strip li { flex: 1 1 0; min-width: 0; padding: .45em .8em; gap: .8em; justify-content: space-between; }
+.board .price-list.strip .price-name { font-size: 1.1em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board .price-list.strip .price-new { font-size: 1.5em; }
+.board .price-list.strip .price-old, .board .price-list.strip .price-delta { font-size: 1.1em; }
+.board .price-list.strip .price-old, .board .price-list.strip .price-arrow { display: none; }
+.board .price-list.strip .price-name { overflow: visible; text-overflow: clip; }
+
+/* ---------- landing: address for players ---------- */
+.address-bar { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.address-text { font-size: 1.4rem; font-weight: 800; overflow-wrap: anywhere; user-select: all; }
+.copy-btn { width: auto; min-width: 140px; }

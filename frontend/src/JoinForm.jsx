@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { api, saveSession } from './api.js';
+import { api, saveSession } from './connection/index.js';
 import { t } from './strings.js';
 
-/** Team sign-up. `fixedCode` is set when the room code is already in the URL. */
-export default function JoinForm({ fixedCode, onJoined }) {
+
+function JoinForm({ fixedCode, onJoined }) {
   const [code, setCode] = useState(fixedCode || '');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -48,3 +48,5 @@ export default function JoinForm({ fixedCode, onJoined }) {
     </form>
   );
 }
+
+export default JoinForm;

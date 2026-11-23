@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { api } from './api.js';
+import CopyButton from './CopyButton.jsx';
+import { api, isLocalOnly, useServerAddress } from './connection/index.js';
 import JoinForm from './JoinForm.jsx';
 import { t } from './strings.js';
 
@@ -68,10 +69,25 @@ function HostForm() {
   );
 }
 
+function AddressBar() {
+  const base = useServerAddress();
+  return (
+    <section className="panel address-bar">
+      <div>
+        <p className="muted">{t('playersJoinAt')}</p>
+        <p className="address-text">{base}</p>
+        {isLocalOnly(base) && <p className="error">{t('localOnlyHint')}</p>}
+      </div>
+      <CopyButton text={base} />
+    </section>
+  );
+}
+
 export default function Landing() {
   return (
     <div className="landing">
       <h1>{t('appName')}</h1>
+      <AddressBar />
       <div className="landing-grid">
         <JoinForm onJoined={(room) => window.location.assign(`/play/${room}`)} />
         <HostForm />
