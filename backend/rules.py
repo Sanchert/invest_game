@@ -62,6 +62,21 @@ def holdings_value(holdings: dict, startups: dict, step: int) -> int:
     return total
 
 
+def turn_gains(holdings: dict, turn: int, startups: dict) -> dict:
+    """What the price changes of `turn` brought to a team: {startup_id: (shares, gain)}
+    with gain = shares x (new price - price during the turn). Insider costs are not included."""
+    gains = {}
+    for sid, shares in holdings.items():
+        if shares <= 0:
+            continue
+        info = startups[sid]
+        old = info["prices"].get(turn)
+        new = info["prices"].get(turn + 1)
+        if old is not None and new is not None:
+            gains[sid] = (shares, shares * (new - old))
+    return gains
+
+
 def resolve_turn(cash: int, holdings: dict, turn: int, startups: dict):
     """Close `turn`: shares of startups whose story ends are sold at their final price,
     the rest are valued at the newly revealed price P(turn+1).

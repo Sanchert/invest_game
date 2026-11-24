@@ -12,8 +12,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 import game as game_engine
-import models  # noqa: F401  (registers the tables)
-import rules
+import models as models  # noqa: F401  (registers the tables)
+import rules as rules
 from database import Base, engine as db_engine, get_db
 from constants import ErrorCode
 from game import GameError
@@ -80,8 +80,8 @@ def health():
 
 
 @app.get("/api/config", response_model=ConfigOut)
-def client_config():
-    return ConfigOut(public_url=PUBLIC_URL)
+def client_config(db: Session = Depends(get_db)):
+    return ConfigOut(public_url=PUBLIC_URL, **game_engine.library_stats(db))
 
 
 @app.post("/api/games", response_model=CreateGameOut)

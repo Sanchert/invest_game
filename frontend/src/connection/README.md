@@ -10,7 +10,8 @@ Everything the browser needs to talk to the game server. Screens import only fro
 | `session.js` | the team's token in `localStorage` (`saveSession`, `loadSession`, `clearSession`) |
 | `polling.js` | `usePoll()`: keeps a screen in sync by polling an endpoint (can be paused while a screen has unconfirmed changes) |
 | `clock.js` | `useCountdown()`: countdown on the server's clock, corrected for the device's offset |
-| `address.js` | `useServerAddress()`: the address players open (the server's `PUBLIC_URL`, else this page's own address), `playerUrl()`, `displayAddress()`, `isLocalOnly()` |
+| `lookup.js` | `useRoomStatus()`: checks a room code while it is typed (found / already started / not found) |
+| `address.js` | `useServerConfig()` (address and library limits), `useServerAddress()`: the address players open (the server's `PUBLIC_URL`, else this page's own address), `playerUrl()`, `displayAddress()`, `isLocalOnly()` |
 
 To change how the client reaches the server (timeouts, retries, WebSocket, a configured
 public address), edit this folder; the screens do not need to change.

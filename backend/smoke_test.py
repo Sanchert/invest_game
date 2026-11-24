@@ -93,6 +93,12 @@ _, me_a = call("GET", f"/games/{room}/me", a["token"])
 expected_capital = me_a["cash"] + 20 * new_price["price"]
 check("capital uses the new price", me_a["capital"] == expected_capital, (me_a, expected_capital))
 
+gains = {g["startup_id"]: g for g in me_a["turn_gains"]}
+check("turn gain = shares x price change", startup["id"] in gains
+      and gains[startup["id"]]["gain"] == 20 * (new_price["price"] - price1), me_a["turn_gains"])
+check("total turn gain is the sum", me_a["turn_gain"] == sum(g["gain"] for g in me_a["turn_gains"]), me_a)
+check("config tells the form what the library allows", call("GET", "/config")[1]["startups_available"] >= 5)
+
 wait_for(room, "TURN", 2, timeout=25)
 st, me_a = call("POST", f"/games/{room}/trade", a["token"], {"startup_id": startup["id"], "shares": -5})
 check("sell at the turn-2 price", st == 200, (st, me_a))

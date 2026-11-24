@@ -1,31 +1,30 @@
 import { useState } from 'react';
 import CopyButton from './CopyButton.jsx';
-import { api, isLocalOnly, useServerAddress } from './connection/index.js';
+import { api, isLocalOnly, useServerAddress, useServerConfig } from './connection/index.js';
+import Field, { message } from './Field.jsx';
 import JoinForm from './JoinForm.jsx';
 import { t } from './strings.js';
+import { validateGameForm } from './validation.js';
 
 function HostForm() {
-  const [turns, setTurns] = useState(3);
-  const [minutes, setMinutes] = useState(10);
-  const [seconds, setSeconds] = useState(0);
-  const [startups, setStartups] = useState(5);
+  const [values, setValues] = useState({ turns: '3', minutes: '10', seconds: '0', startups: '5' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const config = useServerConfig();
+  const library = { turnsAvailable: config.turns_available, startupsAvailable: config.startups_available };
+  const { errors, valid, turnSeconds, totalSeconds } = validateGameForm(values, library);
+  const set = (name) => (event) => setValues((prev) => ({ ...prev, [name]: event.target.value }));
 
   const submit = async (event) => {
     event.preventDefault();
-    const turnSeconds = Number(minutes) * 60 + Number(seconds);
-    if (turnSeconds < 10) {
-      setError(t('turnTooShort'));
-      return;
-    }
+    if (!valid || busy) return;
     setBusy(true);
     setError('');
     try {
       const game = await api.createGame({
-        turns: Number(turns),
+        turns: Number(values.turns),
         turn_seconds: turnSeconds,
-        startups_count: Number(startups),
+        startups_count: Number(values.startups),
       });
       window.location.assign(`/board/${game.room_code}`);
     } catch (err) {
@@ -34,37 +33,33 @@ function HostForm() {
     }
   };
 
+  const durationError = errors.duration || errors.minutes || errors.seconds;
   return (
-    <form className="panel" onSubmit={submit}>
+    <form className="panel" onSubmit={submit} noValidate>
       <h2>{t('hostTitle')}</h2>
       <p className="muted">{t('hostText')}</p>
-      <label className="field">
-        <span>{t('turns')}</span>
-        <input type="number" min="1" max="20" value={turns}
-          onChange={(e) => setTurns(e.target.value)} required />
-      </label>
+      {library.turnsAvailable > 0 && (
+        <p className="field-hint">
+          {t('libraryHint', { turns: library.turnsAvailable, startups: library.startupsAvailable })}
+        </p>
+      )}
+      <Field id="host-turns" label={t('turns')} inputMode="numeric" value={values.turns}
+        onChange={set('turns')} error={errors.turns} />
       <fieldset className="field">
         <legend>{t('turnLength')}</legend>
         <div className="inline">
-          <label>
-            <input type="number" min="0" max="60" value={minutes}
-              onChange={(e) => setMinutes(e.target.value)} aria-label={t('minutes')} />
-            <small>{t('minutes')}</small>
-          </label>
-          <label>
-            <input type="number" min="0" max="59" value={seconds}
-              onChange={(e) => setSeconds(e.target.value)} aria-label={t('seconds')} />
-            <small>{t('seconds')}</small>
-          </label>
+          <Field id="host-minutes" label={t('minutes')} inputMode="numeric" value={values.minutes}
+            onChange={set('minutes')} error={errors.minutes} />
+          <Field id="host-seconds" label={t('seconds')} inputMode="numeric" value={values.seconds}
+            onChange={set('seconds')} error={errors.seconds} />
         </div>
+        {errors.duration && <p className="field-error" aria-live="polite">{message(durationError)}</p>}
       </fieldset>
-      <label className="field">
-        <span>{t('startupCount')}</span>
-        <input type="number" min="1" max="12" value={startups}
-          onChange={(e) => setStartups(e.target.value)} required />
-      </label>
+      <Field id="host-startups" label={t('startupCount')} inputMode="numeric" value={values.startups}
+        onChange={set('startups')} error={errors.startups} />
+      {valid && <p className="field-hint">{t('gameLasts', { n: Math.max(1, Math.round(totalSeconds / 60)) })}</p>}
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="btn primary" disabled={busy}>{t('createGame')}</button>
+      <button className="btn primary" disabled={!valid || busy}>{t('createGame')}</button>
     </form>
   );
 }

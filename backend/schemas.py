@@ -106,6 +106,12 @@ class InsiderOut(BaseModel):
     text: str
 
 
+class TurnGainOut(BaseModel):
+    startup_id: int
+    shares: int
+    gain: int
+
+
 class MeOut(BaseModel):
     team_id: int
     name: str
@@ -118,6 +124,8 @@ class MeOut(BaseModel):
     insiders_left: int
     rank: Optional[int] = None
     score: Optional[int] = None
+    turn_gains: List[TurnGainOut] = []   # results of the last turn: what each startup brought
+    turn_gain: Optional[int] = None      # their sum
 
 
 class InsiderBought(BaseModel):
@@ -127,6 +135,8 @@ class InsiderBought(BaseModel):
 
 class ConfigOut(BaseModel):
     public_url: Optional[str] = None   # where players should go, if the server knows it
+    startups_available: int = 0        # startups in the library
+    turns_available: int = 0           # the longest game the library allows
 
 
 class ErrorOut(BaseModel):

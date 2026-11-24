@@ -66,13 +66,16 @@ function Lobby({ board }) {
     <main className="lobby">
       <div className="lobby-main">
         <div className="join-row">
-          <div className="qr-tile">
-            <QrCode text={playerUrl(base, board.room_code)} label={t('scanToJoin')} />
-          </div>
+          <figure className="qr-figure">
+            <figcaption className="qr-caption">{t('scanToJoin')}</figcaption>
+            <div className="qr-tile">
+              <QrCode text={playerUrl(base, board.room_code)} label={t('scanToJoin')} />
+            </div>
+          </figure>
           <div className="join-text">
-            <p className="lobby-join">{t('scanToJoin')}</p>
-            <p className="room-code">{board.room_code}</p>
             <p className="lobby-join">{t('orOpen', { address: displayAddress(base) })}</p>
+            {/* <p className="lobby-join">{t('roomCode')}</p> */}
+            <p className="room-code">{board.room_code}</p>
           </div>
         </div>
         {isLocalOnly(base) && <p className="banner" role="status">{t('localOnlyHint')}</p>}

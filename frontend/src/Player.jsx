@@ -7,7 +7,7 @@ import { PHASE } from './constants.js';
 import JoinForm from './JoinForm.jsx';
 import PriceList from './PriceList.jsx';
 import { t } from './strings.js';
-import { formatClock, startupColor } from './ui.js';
+import { formatClock, signed, startupColor } from './ui.js';
 import { useTrader } from './useTrader.js';
 
 export default function Player({ code }) {
@@ -87,7 +87,7 @@ function GameBody({ code, token, board, me, setMe, run, refreshMe, pausedRef, bo
   const shown = trader.view;
   const ctx = { code, token, board, me: shown, setMe, run, refreshMe, trader };
   return (
-    <div className="phone">
+    <div className={`phone ${board.phase === PHASE.TURN ? 'is-turn' : ''}`}>
       <PhoneHeader board={board} me={shown} />
       <div className="phone-pad">
         {boardError && <p className="notice" role="status">{t('connectionLost')}</p>}
@@ -166,14 +166,32 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
   );
 }
 
-function StartupCard({ startup, index, shares, cash, turnNo, locked, onTap }) {
+/** One startup in the news tab: the full text, with room for more. */
+function NewsCard({ startup, index, turnNo }) {
+  const body = turnNo === 1 ? startup.description : (startup.news ?? startup.description);
+  return (
+    <article className={`ticket news-card ${startup.open ? '' : 'is-closed'}`}
+      style={{ '--accent': startupColor(index) }}>
+      <div className="ticket-head">
+        <h3>{startup.name}</h3>
+        {!startup.open && <span className="tag">{t('closed')}</span>}
+      </div>
+      <p className="ticket-body">{startup.open ? body : t('closedText')}</p>
+      {turnNo > 1 && startup.open && startup.news && (
+        <details className="about"><summary>{t('about')}</summary><p>{startup.description}</p></details>
+      )}
+    </article>
+  );
+}
+
+/** One startup in the trading tab: only what is needed to trade. */
+function TradeCard({ startup, index, shares, cash, locked, onTap }) {
   const price = startup.price;
   const tradable = startup.open && !locked;
   const canBuy = (n) => tradable && price > 0 && cash >= n * price;
   const canSell = (n) => tradable && shares >= n;
-  const body = turnNo === 1 ? startup.description : (startup.news ?? startup.description);
   return (
-    <article className={`ticket ${startup.open ? '' : 'is-closed'}`}
+    <article className={`ticket trade-card ${startup.open ? '' : 'is-closed'}`}
       style={{ '--accent': startupColor(index) }}>
       <div className="ticket-head">
         <h3>{startup.name}</h3>
@@ -181,12 +199,6 @@ function StartupCard({ startup, index, shares, cash, turnNo, locked, onTap }) {
           ? <span className="tag">{t('closed')}</span>
           : <p className="price-tag"><span>{t('priceShort')}</span><strong className="tnum">{price}</strong></p>}
       </div>
-      {startup.open
-        ? <p className="ticket-body">{body}</p>
-        : <p className="ticket-body muted">{t('closedText')}</p>}
-      {turnNo > 1 && startup.open && startup.news && (
-        <details className="about"><summary>{t('about')}</summary><p>{startup.description}</p></details>
-      )}
       {startup.open && (
         <div className="trade">
           <div className="trade-info">
@@ -217,12 +229,27 @@ function TipCard({ tip, color }) {
 function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [tab, setTab] = useState(0); // 0 = news, 1 = trading
+  const pager = useRef(null);
   const confirmTimer = useRef();
   const locked = me.ready;
   const colorOf = (startupId) => startupColor(board.startups.findIndex((s) => s.id === startupId));
   const thisTurn = me.insiders.filter((i) => i.turn === board.turn_no);
   const earlier = me.insiders.filter((i) => i.turn < board.turn_no);
   const done = board.teams.filter((x) => x.ready).length;
+
+  const goTo = (index) => {
+    const el = pager.current;
+    if (!el) return;
+    setTab(index);
+    el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' });
+  };
+  // Swiping scrolls the pager; keep the tab bar in step with where it came to rest.
+  const onScroll = () => {
+    const el = pager.current;
+    const index = Math.round(el.scrollLeft / el.clientWidth);
+    if (index !== tab) setTab(index);
+  };
 
   const buyTip = async () => {
     setBusy(true);
@@ -250,37 +277,52 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
 
   return (
     <>
-      <section className="stack">
-        {board.turn_no === 1 && <p className="notice">{t('introTurn')}</p>}
+      <div className="tabs" role="tablist">
+        <button role="tab" id="tab-news" aria-controls="page-news" aria-selected={tab === 0}
+          className="tab" onClick={() => goTo(0)}>{t('tabNews')}</button>
+        <button role="tab" id="tab-trade" aria-controls="page-trade" aria-selected={tab === 1}
+          className="tab" onClick={() => goTo(1)}>{t('tabTrade')}</button>
+      </div>
 
-        <div className="panel tips">
-          <h2>{t('tips')}</h2>
-          <p className="muted">{t('tipsHelp')}</p>
-          <button className="btn coral" onClick={buyTip}
-            disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0}>
-            {t('buyTip', { cost: me.insider_cost })}
-          </button>
-          {me.insiders_left === 0 && <p className="muted" role="status">{t('noTipsLeft')}</p>}
-          {thisTurn.length > 0 && (
-            <ul className="tip-list" aria-label={t('yourTips')}>
-              {thisTurn.map((tip, i) => <TipCard key={`${tip.startup_id}-${i}`} tip={tip} color={colorOf(tip.startup_id)} />)}
-            </ul>
-          )}
-          {earlier.length > 0 && (
-            <details className="about">
-              <summary>{t('earlierTips')}</summary>
-              <ul className="tip-list">
-                {earlier.map((tip, i) => <TipCard key={`${tip.turn}-${i}`} tip={tip} color={colorOf(tip.startup_id)} />)}
+      <div className="pager" ref={pager} onScroll={onScroll}>
+        <section className="page" id="page-news" role="tabpanel" aria-labelledby="tab-news">
+          {board.turn_no === 1 && <p className="notice">{t('introTurn')}</p>}
+
+          <div className="panel tips">
+            <h2>{t('tips')}</h2>
+            <p className="muted">{t('tipsHelp')}</p>
+            <button className="btn coral" onClick={buyTip}
+              disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0}>
+              {t('buyTip', { cost: me.insider_cost })}
+            </button>
+            {me.insiders_left === 0 && <p className="muted" role="status">{t('noTipsLeft')}</p>}
+            {thisTurn.length > 0 && (
+              <ul className="tip-list" aria-label={t('yourTips')}>
+                {thisTurn.map((tip, i) => <TipCard key={`${tip.startup_id}-${i}`} tip={tip} color={colorOf(tip.startup_id)} />)}
               </ul>
-            </details>
-          )}
-        </div>
+            )}
+            {earlier.length > 0 && (
+              <details className="about">
+                <summary>{t('earlierTips')}</summary>
+                <ul className="tip-list">
+                  {earlier.map((tip, i) => <TipCard key={`${tip.turn}-${i}`} tip={tip} color={colorOf(tip.startup_id)} />)}
+                </ul>
+              </details>
+            )}
+          </div>
 
-        {board.startups.map((s, i) => (
-          <StartupCard key={s.id} startup={s} index={i} shares={me.owned[s.id] || 0}
-            cash={me.cash} turnNo={board.turn_no} locked={locked} onTap={trader.tap} />
-        ))}
-      </section>
+          {board.startups.map((s, i) => (
+            <NewsCard key={s.id} startup={s} index={i} turnNo={board.turn_no} />
+          ))}
+        </section>
+
+        <section className="page" id="page-trade" role="tabpanel" aria-labelledby="tab-trade">
+          {board.startups.map((s, i) => (
+            <TradeCard key={s.id} startup={s} index={i} shares={me.owned[s.id] || 0}
+              cash={me.cash} locked={locked} onTap={trader.tap} />
+          ))}
+        </section>
+      </div>
 
       <div className="ready-bar">
         {locked ? (
@@ -302,6 +344,39 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
 
 const byRank = (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || a.name.localeCompare(b.name);
 
+/** For every startup: the price move, and what it brought to this team's budget. */
+function GainList({ startups, gains, total }) {
+  const byId = Object.fromEntries(gains.map((g) => [g.startup_id, g]));
+  const tone = (n) => (n > 0 ? 'up' : n < 0 ? 'down' : '');
+  return (
+    <>
+      <ul className="gain-list">
+        {startups.map((s, i) => {
+          const g = byId[s.id];
+          const known = s.price != null && s.prev_price != null;
+          return (
+            <li key={s.id} style={{ '--accent': startupColor(i) }}>
+              <div className="gain-main">
+                <span className="price-name">{s.name}</span>
+                <span className="gain-detail tnum">
+                  {known ? `${s.prev_price} → ${s.price}` : t('closed')}
+                  {' · '}
+                  {g ? `${g.shares} × ${signed(s.price - s.prev_price)}` : t('noShares')}
+                </span>
+              </div>
+              <span className={`gain tnum ${g ? tone(g.gain) : 'none'}`}>{g ? signed(g.gain) : '—'}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="gain-total">
+        <span>{t('turnTotal')}</span>
+        <strong className={`tnum ${tone(total ?? 0)}`}>{signed(total ?? 0)}</strong>
+      </p>
+    </>
+  );
+}
+
 function ResultsView({ board, me }) {
   const left = useCountdown(board.phase_ends_at, board.server_time);
   return (
@@ -312,8 +387,8 @@ function ResultsView({ board, me }) {
         <p className="muted">{t('nextTurnIn', { n: left ?? '–' })}</p>
       </div>
       <div className="panel">
-        <h2>{t('newPrices')}</h2>
-        <PriceList startups={board.startups} />
+        <h2>{t('turnGain')}</h2>
+        <GainList startups={board.startups} gains={me.turn_gains} total={me.turn_gain} />
       </div>
       <div className="panel">
         <h2>{t('ranking')}</h2>

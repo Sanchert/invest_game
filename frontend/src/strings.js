@@ -79,6 +79,30 @@ const en = {
   loading: 'Loading…',
   leaveBoard: 'Leave board',
   leaveBoardConfirm: 'The game keeps running. You can reopen this board with the same room code. Leave the board?',
+
+  // validation
+  errRequired: 'Fill this in.',
+  errWhole: 'Enter a whole number.',
+  errRange: 'From {min} to {max}.',
+  errTurnsLibrary: 'The startup library allows at most {n} turns.',
+  errStartupsLibrary: 'The library has only {n} startups.',
+  errTurnShort: 'A turn must last at least {n} seconds.',
+  errTurnLong: 'A turn can last at most 60 minutes.',
+  errCode: 'The code has 5 letters or digits (no 0, 1, I, L, O).',
+  errName: 'At most {max} characters.',
+  errNameTaken: 'This name is already taken in this game.',
+  errRoomNotFound: 'No game with this code.',
+  errRoomStarted: 'This game has already started.',
+  checkingRoom: 'Looking for the game…',
+  roomFound: 'Game found.',
+  gameLasts: 'The game will last about {n} min.',
+  libraryHint: 'Up to {turns} turns and {startups} startups are available.',
+  // phone: tabs and results
+  tabNews: 'News',
+  tabTrade: 'Trading',
+  turnGain: 'What the turn brought you',
+  turnTotal: 'Total for the turn',
+  noShares: 'no shares',
 };
 
 const ru = {
@@ -92,12 +116,12 @@ const ru = {
   startupCount: 'Стартапов в игре',
   createGame: 'Создать игру',
   joinTitle: 'Войти командой',
-  roomCode: 'Код комнаты',
+  // roomCode: 'Код комнаты',
   teamName: 'Название команды',
   joinGame: 'Войти в игру',
   turnTooShort: 'Ход должен длиться не меньше 10 секунд.',
   scanToJoin: 'Сканируйте, чтобы войти',
-  orOpen: 'Или откройте {address} и введите код',
+  orOpen: 'Или откройте {address} и введите код комнаты',
   playersJoinAt: 'Игроки заходят по адресу',
   copy: 'Копировать',
   copied: 'Скопировано',
@@ -156,6 +180,30 @@ const ru = {
   loading: 'Загрузка…',
   leaveBoard: 'Выйти с табло',
   leaveBoardConfirm: 'Игра продолжится. Табло можно открыть снова по тому же коду комнаты. Выйти с табло?',
+
+  // validation
+  errRequired: 'Заполните поле.',
+  errWhole: 'Введите целое число.',
+  errRange: 'От {min} до {max}.',
+  errTurnsLibrary: 'В библиотеке стартапов не больше {n} ходов.',
+  errStartupsLibrary: 'В библиотеке только {n} стартапов.',
+  errTurnShort: 'Ход должен длиться не меньше {n} секунд.',
+  errTurnLong: 'Ход может длиться не больше 60 минут.',
+  errCode: 'Код состоит из 5 букв или цифр (без 0, 1, I, L, O).',
+  errName: 'Не больше {max} символов.',
+  errNameTaken: 'Такое название уже занято в этой игре.',
+  errRoomNotFound: 'Игры с таким кодом нет.',
+  errRoomStarted: 'Игра уже началась.',
+  checkingRoom: 'Ищем игру…',
+  roomFound: 'Игра найдена.',
+  gameLasts: 'Игра продлится примерно {n} мин.',
+  libraryHint: 'Доступно до {turns} ходов и {startups} стартапов.',
+  // phone: tabs and results
+  tabNews: 'Новости',
+  tabTrade: 'Торговля',
+  turnGain: 'Что принёс ход',
+  turnTotal: 'Итого за ход',
+  noShares: 'нет акций',
 };
 
 const dictionaries = { en, ru };

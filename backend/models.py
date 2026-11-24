@@ -108,3 +108,13 @@ class Snapshot(Base):
     shares_value: Mapped[int] = mapped_column(Integer)
     score: Mapped[int] = mapped_column(Integer)  # capital minus starting capital
     rank: Mapped[int] = mapped_column(Integer)
+
+
+class TurnGain(Base):
+    """What one startup's price change brought to a team in a turn (private to the team)."""
+    __tablename__ = "turn_gains"
+    team_id: Mapped[int] = mapped_column(_cascade("teams"), primary_key=True)
+    turn_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    startup_id: Mapped[int] = mapped_column(_cascade("startups"), primary_key=True)
+    shares: Mapped[int] = mapped_column(Integer)
+    gain: Mapped[int] = mapped_column(Integer)

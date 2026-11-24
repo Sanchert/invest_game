@@ -13,7 +13,7 @@ import rules
 import settings
 from constants import Phase
 from game.common import aware, list_teams, load_startups, rule_info
-from models import Game, Holding, Snapshot, utcnow
+from models import Game, Holding, Snapshot, TurnGain, utcnow
 from presence import presence
 
 
@@ -94,8 +94,11 @@ def _end_turn(db: Session, game: Game, now: datetime) -> None:
     scores, parts = {}, {}
     for team in teams:
         rows = holdings_by_team.get(team.id, [])
-        cash, new_holdings, value = rules.resolve_turn(
-            team.cash, {h.startup_id: h.shares for h in rows}, game.turn_no, startups)
+        held = {h.startup_id: h.shares for h in rows}
+        for sid, (shares, gain) in rules.turn_gains(held, game.turn_no, startups).items():
+            db.add(TurnGain(team_id=team.id, turn_no=game.turn_no, startup_id=sid,
+                            shares=shares, gain=gain))
+        cash, new_holdings, value = rules.resolve_turn(team.cash, held, game.turn_no, startups)
         team.cash = cash
         team.ready = True  # a team that never pressed Ready is confirmed automatically
         for h in rows:

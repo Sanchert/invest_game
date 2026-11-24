@@ -15,6 +15,12 @@ from models import Game, GameStartup, Insider, News, Startup, StartupPrice
 log = logging.getLogger("invest")
 
 
+def library_stats(db: Session) -> dict:
+    """How many startups there are and how many turns the longest one lasts."""
+    count, longest = db.execute(select(func.count(Startup.id), func.max(Startup.last_turn))).one()
+    return {"startups_available": count or 0, "turns_available": longest or 0}
+
+
 def import_pack(db: Session, startups: list) -> dict:
     created = updated = 0
     for s in startups:

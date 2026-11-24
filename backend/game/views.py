@@ -6,9 +6,10 @@ import rules
 import settings
 from constants import Phase
 from game.common import insider_candidates, iso, load_startups, rule_info
-from models import Game, Holding, Insider, News, Snapshot, Startup, Team, TeamInsider, utcnow
+from models import (Game, Holding, Insider, News, Snapshot, Startup, Team, TeamInsider, TurnGain,
+                    utcnow)
 from schemas import (BoardOut, BoardStartup, BoardTeam, Chart, ChartSeries, HoldingOut,
-                     InsiderOut, MeOut)
+                     InsiderOut, MeOut, TurnGainOut)
 from game.common import list_teams
 
 
@@ -36,8 +37,14 @@ def build_me(db: Session, game: Game, team: Team) -> MeOut:
     ).all()
     left = len(insider_candidates(db, game, team.id)) if game.phase == Phase.TURN else 0
 
-    rank = score = None
+    rank = score = turn_gain = None
+    gains = []
     if game.phase in (Phase.RESULTS, Phase.FINISHED):
+        gains = [TurnGainOut(startup_id=g.startup_id, shares=g.shares, gain=g.gain)
+                 for g in db.execute(select(TurnGain).where(
+                     TurnGain.team_id == team.id, TurnGain.turn_no == game.turn_no)
+                     .order_by(TurnGain.startup_id)).scalars()]
+        turn_gain = sum(g.gain for g in gains)
         snap = db.get(Snapshot, (team.id, game.turn_no))
         if snap:
             rank = snap.rank
@@ -50,7 +57,7 @@ def build_me(db: Session, game: Game, team: Team) -> MeOut:
         insiders=[InsiderOut(turn=i.turn, startup_id=s.id, startup_name=s.name, text=i.text)
                   for i, s in tips],
         insider_cost=rules.insider_cost(max(game.turn_no, 1), settings.INSIDER_COSTS),
-        insiders_left=left, rank=rank, score=score,
+        insiders_left=left, rank=rank, score=score, turn_gains=gains, turn_gain=turn_gain,
     )
 
 

@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import { api } from './endpoints.js';
 
-/** The address players should open. The server knows it (start.py finds the computer's
- *  network address and passes it as PUBLIC_URL); until it answers, or if it does not
- *  know, this page's own address is used. */
-export function useServerAddress() {
-  const [base, setBase] = useState(() => window.location.origin);
+/** What the server tells the client: the address players should open (start.py finds the
+ *  computer's network address and passes it as PUBLIC_URL) and what the startup library
+ *  allows. Fields stay empty until the server answers. */
+export function useServerConfig() {
+  const [config, setConfig] = useState({});
   useEffect(() => {
     let cancelled = false;
     api.config()
-      .then((config) => { if (!cancelled && config?.public_url) setBase(config.public_url); })
-      .catch(() => { /* keep the page's own address */ });
+      .then((c) => { if (!cancelled && c) setConfig(c); })
+      .catch(() => { /* keep the defaults */ });
     return () => { cancelled = true; };
   }, []);
-  return base;
+  return config;
+}
+
+/** The address players should open: the server's, else this page's own address. */
+export function useServerAddress() {
+  const { public_url: publicUrl } = useServerConfig();
+  return publicUrl || window.location.origin;
 }
 
 /** The link that opens the player screen for a room (what the QR code holds). */
