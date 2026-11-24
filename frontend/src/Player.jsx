@@ -10,6 +10,9 @@ import { t } from './strings.js';
 import { formatClock, signed, startupColor } from './ui.js';
 import { useTrader } from './useTrader.js';
 
+const STORAGE_CODE = 'join_room_code';
+const STORAGE_NAME = 'join_team_name';
+
 export default function Player({ code }) {
   const [session, setSession] = useState(() => loadSession(code));
   if (!session) {
@@ -137,7 +140,12 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
   };
   const leave = async () => {
     const done = await run(async () => { await api.leave(code, token); return true; });
-    if (done) { clearSession(code); window.location.reload(); }
+    if (done) {
+      clearSession(code);
+      localStorage.removeItem(STORAGE_CODE);
+      localStorage.removeItem(STORAGE_NAME);
+      window.location.reload();
+    }
   };
   let status = t('waitingReady');
   if (board.teams.length < board.min_teams) status = t('needTeams', { n: board.min_teams });
