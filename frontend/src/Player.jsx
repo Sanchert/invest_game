@@ -26,7 +26,14 @@ export default function Player({ code }) {
     );
   }
   return <Game code={code} token={session.token}
-    onLost={() => { clearSession(code); setSession(null); }} />;
+    onLost={() => {
+      clearSession(code);
+      sessionStorage.removeItem(STORAGE_CODE);
+      sessionStorage.removeItem(STORAGE_NAME);
+      sessionStorage.removeItem(`turn_tab_${code}`);
+      sessionStorage.removeItem('host_form_values');
+      setSession(null);
+    }} />;
 }
 
 function Game({ code, token, onLost }) {
@@ -142,8 +149,10 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
     const done = await run(async () => { await api.leave(code, token); return true; });
     if (done) {
       clearSession(code);
-      localStorage.removeItem(STORAGE_CODE);
-      localStorage.removeItem(STORAGE_NAME);
+      sessionStorage.removeItem(STORAGE_CODE);
+      sessionStorage.removeItem(STORAGE_NAME);
+      sessionStorage.removeItem(`turn_tab_${code}`);
+      sessionStorage.removeItem('host_form_values');
       window.location.reload();
     }
   };
@@ -237,7 +246,10 @@ function TipCard({ tip, color }) {
 function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [tab, setTab] = useState(0); // 0 = news, 1 = trading
+  const [tab, setTab] = useState(() => {
+    const saved = sessionStorage.getItem(`turn_tab_${code}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const pager = useRef(null);
   const confirmTimer = useRef();
   const locked = me.ready;
@@ -245,6 +257,10 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
   const thisTurn = me.insiders.filter((i) => i.turn === board.turn_no);
   const earlier = me.insiders.filter((i) => i.turn < board.turn_no);
   const done = board.teams.filter((x) => x.ready).length;
+
+  useEffect(() => {
+    sessionStorage.setItem(`turn_tab_${code}`, String(tab));
+  }, [tab, code]);
 
   const goTo = (index) => {
     const el = pager.current;

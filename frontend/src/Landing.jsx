@@ -10,7 +10,7 @@ const STORAGE_KEY = 'host_form_values';
 
 function HostForm() {
   const loadDefault = () => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -28,7 +28,7 @@ function HostForm() {
   const set = (name) => (event) => setValues((prev) => ({ ...prev, [name]: event.target.value }));
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
   }, [values]);
 
   const submit = async (event) => {
