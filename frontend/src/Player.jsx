@@ -316,7 +316,7 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
             <h2>{t('tips')}</h2>
             <p className="muted">{t('tipsHelp')}</p>
             <button className="btn coral" onClick={buyTip}
-              disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0}>
+              disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0 || board.turn_no < 2}>
               {t('buyTip', { cost: me.insider_cost })}
             </button>
             {me.insiders_left === 0 && <p className="muted" role="status">{t('noTipsLeft')}</p>}
@@ -429,7 +429,7 @@ function ResultsView({ board, me }) {
   );
 }
 
-function FinalView({ board, me }) {
+function FinalView({ board, me, code }) {
   return (
     <section className="stack">
       <div className="panel center">
@@ -460,7 +460,13 @@ function FinalView({ board, me }) {
           <Chart turns={board.chart.turns} series={board.chart.series} highlight={me.name} />
         </div>
       )}
-      <button className="btn ghost" onClick={() => window.location.assign('/')}>{t('startOver')}</button>
+      <button className="btn ghost" onClick={() => {
+        sessionStorage.removeItem(STORAGE_CODE);
+        sessionStorage.removeItem(STORAGE_NAME);
+        sessionStorage.removeItem(`turn_tab_${code}`);
+        sessionStorage.removeItem('host_form_values');
+        window.location.assign('/');
+      }}>{t('startOver')}</button>
     </section>
   );
 }
