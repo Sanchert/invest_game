@@ -128,7 +128,6 @@ function TurnView({ board }) {
       <header className="board-top">
         <p className="turn-label">{t('turnOf', { n: board.turn_no, total: board.turns_total })}</p>
         <p className={`clock ${urgent ? 'urgent' : ''}`} aria-label={t('timeLeft')}>{formatClock(left)}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <div className="timebar"><i className={urgent ? 'urgent' : ''} style={{ width: `${pct}%` }} /></div>
       <main className="startup-row">
@@ -170,7 +169,6 @@ function ResultsView({ board }) {
       <header className="board-top">
         <p className="turn-label">{t('resultsTitle', { n: board.turn_no })}</p>
         <p className="clock small" aria-live="off">{t('nextTurnIn', { n: left ?? '–' })}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <main className="results-grid">
         <section>
@@ -193,7 +191,6 @@ function FinalView({ board }) {
       <header className="board-top">
         <p className="turn-label">{t('gameOver')}</p>
         <p className="clock small">{t('finalStandings')}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <main className="results-grid">
         <section>

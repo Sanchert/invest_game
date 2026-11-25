@@ -166,7 +166,6 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
   return (
     <section className="stack">
       <div className="panel">
-        <p className="room-code-small">{board.room_code}</p>
         <p className="muted">{board.countdown_ends_at && left !== null ? t('startingIn', { n: left }) : status}</p>
       </div>
       <div className="panel">
