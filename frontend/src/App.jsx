@@ -1,8 +1,17 @@
+import { LangProvider } from './lang.jsx';
 import Board from './Board.jsx';
 import Landing from './Landing.jsx';
 import Player from './Player.jsx';
 
 export default function App() {
+  return (
+    <LangProvider>
+      <AppContent />
+    </LangProvider>
+  );
+}
+
+function AppContent() {
   const path = window.location.pathname;
   const board = path.match(/^\/board\/([A-Za-z0-9]+)\/?$/);
   if (board) 

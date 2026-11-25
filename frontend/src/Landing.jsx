@@ -3,12 +3,14 @@ import CopyButton from './CopyButton.jsx';
 import { api, isLocalOnly, useServerAddress, useServerConfig } from './connection/index.js';
 import Field, { message } from './Field.jsx';
 import JoinForm from './JoinForm.jsx';
-import { t } from './strings.js';
+import LanguageSwitcher from './LanguageSwitcher.jsx';
+import { useT } from './strings.js';
 import { validateGameForm } from './validation.js';
 
 const STORAGE_KEY = 'host_form_values';
 
 function HostForm() {
+  const t = useT();
   const loadDefault = () => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -69,7 +71,7 @@ function HostForm() {
           <Field id="host-seconds" label={t('seconds')} inputMode="numeric" value={values.seconds}
             onChange={set('seconds')} error={errors.seconds} />
         </div>
-        {errors.duration && <p className="field-error" aria-live="polite">{message(durationError)}</p>}
+        {errors.duration && <p className="field-error" aria-live="polite">{message(durationError, t)}</p>}
       </fieldset>
       <Field id="host-startups" label={t('startupCount')} inputMode="numeric" value={values.startups}
         onChange={set('startups')} error={errors.startups} />
@@ -81,6 +83,7 @@ function HostForm() {
 }
 
 function AddressBar() {
+  const t = useT();
   const base = useServerAddress();
   return (
     <section className="panel address-bar">
@@ -95,9 +98,13 @@ function AddressBar() {
 }
 
 export default function Landing() {
+  const t = useT();
   return (
     <div className="landing">
-      <h1>{t('appName')}</h1>
+      <div className="landing-header">
+        <h1>{t('appName')}</h1>
+        <LanguageSwitcher />
+      </div>
       <AddressBar />
       <div className="landing-grid">
         <JoinForm onJoined={(room) => window.location.assign(`/play/${room}`)} />

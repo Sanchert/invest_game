@@ -6,7 +6,7 @@ import {
 import { PHASE } from './constants.js';
 import JoinForm from './JoinForm.jsx';
 import PriceList from './PriceList.jsx';
-import { t } from './strings.js';
+import { t, useT } from './strings.js';
 import { formatClock, signed, startupColor } from './ui.js';
 import { useTrader } from './useTrader.js';
 
@@ -14,6 +14,7 @@ const STORAGE_CODE = 'join_room_code';
 const STORAGE_NAME = 'join_team_name';
 
 export default function Player({ code }) {
+  const t = useT();
   const [session, setSession] = useState(() => loadSession(code));
   if (!session) {
     return (
@@ -37,6 +38,7 @@ export default function Player({ code }) {
 }
 
 function Game({ code, token, onLost }) {
+  const t = useT();
   const pausedRef = useRef(false); // true while the screen shows unconfirmed trades
   const [board, , boardError] = usePoll(() => api.board(code), 2000, [code]);
   const [me, setMe, meError] = usePoll(() => api.me(code, token), 2000, [code, token], pausedRef);
@@ -86,6 +88,7 @@ function Game({ code, token, onLost }) {
 }
 
 function GameBody({ code, token, board, me, setMe, run, refreshMe, pausedRef, boardError }) {
+  const t = useT();
   // Prices at which this turn's trades happen (null when a startup cannot be traded).
   const prices = useMemo(() => Object.fromEntries(board.startups.map((s) => [
     s.id, board.phase === PHASE.TURN && s.open ? s.price : null,
@@ -111,6 +114,7 @@ function GameBody({ code, token, board, me, setMe, run, refreshMe, pausedRef, bo
 }
 
 function PhoneHeader({ board, me }) {
+  const t = useT();
   const left = useCountdown(board.phase_ends_at, board.server_time);
   const timed = board.phase === PHASE.TURN || board.phase === PHASE.RESULTS;
   const pct = timed && left !== null
@@ -140,6 +144,7 @@ function PhoneHeader({ board, me }) {
 }
 
 function LobbyView({ code, token, board, me, run, refreshMe }) {
+  const t = useT();
   const left = useCountdown(board.countdown_ends_at, board.server_time);
   const toggle = async () => {
     await run(() => (me.ready ? api.unready(code, token) : api.ready(code, token)));
@@ -185,6 +190,7 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
 
 /** One startup in the news tab: the full text, with room for more. */
 function NewsCard({ startup, index, turnNo }) {
+  const t = useT();
   const body = turnNo === 1 ? startup.description : (startup.news ?? startup.description);
   return (
     <article className={`ticket news-card ${startup.open ? '' : 'is-closed'}`}
@@ -203,6 +209,7 @@ function NewsCard({ startup, index, turnNo }) {
 
 /** One startup in the trading tab: only what is needed to trade. */
 function TradeCard({ startup, index, shares, cash, locked, onTap }) {
+  const t = useT();
   const price = startup.price;
   const tradable = startup.open && !locked;
   const canBuy = (n) => tradable && price > 0 && cash >= n * price;
@@ -244,6 +251,7 @@ function TipCard({ tip, color }) {
 }
 
 function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [tab, setTab] = useState(() => {
@@ -370,6 +378,7 @@ const byRank = (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || a.name.localeCompare
 
 /** For every startup: the price move, and what it brought to this team's budget. */
 function GainList({ startups, gains, total }) {
+  const t = useT();
   const byId = Object.fromEntries(gains.map((g) => [g.startup_id, g]));
   const tone = (n) => (n > 0 ? 'up' : n < 0 ? 'down' : '');
   return (
@@ -402,6 +411,7 @@ function GainList({ startups, gains, total }) {
 }
 
 function ResultsView({ board, me }) {
+  const t = useT();
   const left = useCountdown(board.phase_ends_at, board.server_time);
   return (
     <section className="stack">
@@ -430,6 +440,7 @@ function ResultsView({ board, me }) {
 }
 
 function FinalView({ board, me, code }) {
+  const t = useT();
   return (
     <section className="stack">
       <div className="panel center">

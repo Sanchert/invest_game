@@ -1,12 +1,13 @@
-import { t } from './strings.js';
+import { useT } from './strings.js';
 
 /** Turns an error description from validation.js into text. */
-export const message = (error) => (error ? t(error.key, error.vars) : '');
+export const message = (error, t) => (error ? t(error.key, error.vars) : '');
 
 /** A labelled input that shows its problem (or a hint) right under it. */
 export default function Field({ id, label, error, hint, ok, ...input }) {
+  const t = useT();
   const noteId = `${id}-note`;
-  const note = error ? message(error) : (ok || hint);
+  const note = error ? message(error, t) : (ok || hint);
   return (
     <div className={`field ${error ? 'has-error' : ''}`}>
       <label htmlFor={id}>{label}</label>
