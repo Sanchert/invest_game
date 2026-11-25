@@ -45,6 +45,15 @@ export default function Chart({ turns, series, highlight }) {
           <g key={s.team} opacity={strong ? 1 : 0.35}>
             <polyline points={points} fill="none" stroke={color}
               strokeWidth={strong && highlight ? 5 : 3.5} strokeLinejoin="round" strokeLinecap="round" />
+            {s.scores.map((v, i) => (
+              <g key={i}>
+                <circle cx={x(i)} cy={y(v)} r="3" fill={color} />
+                <text x={x(i)} y={y(v) - 8} textAnchor="middle"
+                  className="chart-tick" fill={color} fontSize="11" fontWeight="700">
+                  {v}
+                </text>
+              </g>
+            ))}
             <circle cx={x(last)} cy={y(s.scores[last])} r="5.5" fill={color} />
             <text x={x(last) + 12} y={labelY[s.team] + 5} className="chart-label" fill={color}>
               {s.team.length > 14 ? `${s.team.slice(0, 13)}…` : s.team}
