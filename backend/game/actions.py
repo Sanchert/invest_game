@@ -141,6 +141,8 @@ def buy_insider(db: Session, code: str, token: str) -> InsiderBought:
     team = team_by_token(db, game, token, lock=True)
     if game.phase != Phase.TURN:
         raise GameError(ErrorCode.WRONG_PHASE, "Tips can only be bought during a turn.")
+    if game.turn_no < 2:
+        raise GameError(ErrorCode.WRONG_PHASE, "Tips can only be bought from turn 2.")
     if team.ready:
         raise GameError(ErrorCode.ALREADY_READY, "You have already confirmed this turn.")
     cost = rules.insider_cost(game.turn_no, settings.INSIDER_COSTS)

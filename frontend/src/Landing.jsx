@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CopyButton from './CopyButton.jsx';
 import { api, isLocalOnly, useServerAddress, useServerConfig } from './connection/index.js';
 import Field, { message } from './Field.jsx';
@@ -6,14 +6,30 @@ import JoinForm from './JoinForm.jsx';
 import { t } from './strings.js';
 import { validateGameForm } from './validation.js';
 
+const STORAGE_KEY = 'host_form_values';
+
 function HostForm() {
-  const [values, setValues] = useState({ turns: '3', minutes: '10', seconds: '0', startups: '5' });
+  const loadDefault = () => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.turns && parsed.minutes && parsed.seconds && parsed.startups) return parsed;
+      } catch {}
+    }
+    return { turns: '3', minutes: '10', seconds: '0', startups: '5' };
+  };
+  const [values, setValues] = useState(loadDefault);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const config = useServerConfig();
   const library = { turnsAvailable: config.turns_available, startupsAvailable: config.startups_available };
   const { errors, valid, turnSeconds, totalSeconds } = validateGameForm(values, library);
   const set = (name) => (event) => setValues((prev) => ({ ...prev, [name]: event.target.value }));
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+  }, [values]);
 
   const submit = async (event) => {
     event.preventDefault();

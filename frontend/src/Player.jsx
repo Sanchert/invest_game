@@ -10,6 +10,9 @@ import { t } from './strings.js';
 import { formatClock, signed, startupColor } from './ui.js';
 import { useTrader } from './useTrader.js';
 
+const STORAGE_CODE = 'join_room_code';
+const STORAGE_NAME = 'join_team_name';
+
 export default function Player({ code }) {
   const [session, setSession] = useState(() => loadSession(code));
   if (!session) {
@@ -23,7 +26,14 @@ export default function Player({ code }) {
     );
   }
   return <Game code={code} token={session.token}
-    onLost={() => { clearSession(code); setSession(null); }} />;
+    onLost={() => {
+      clearSession(code);
+      sessionStorage.removeItem(STORAGE_CODE);
+      sessionStorage.removeItem(STORAGE_NAME);
+      sessionStorage.removeItem(`turn_tab_${code}`);
+      sessionStorage.removeItem('host_form_values');
+      setSession(null);
+    }} />;
 }
 
 function Game({ code, token, onLost }) {
@@ -137,7 +147,14 @@ function LobbyView({ code, token, board, me, run, refreshMe }) {
   };
   const leave = async () => {
     const done = await run(async () => { await api.leave(code, token); return true; });
-    if (done) { clearSession(code); window.location.reload(); }
+    if (done) {
+      clearSession(code);
+      sessionStorage.removeItem(STORAGE_CODE);
+      sessionStorage.removeItem(STORAGE_NAME);
+      sessionStorage.removeItem(`turn_tab_${code}`);
+      sessionStorage.removeItem('host_form_values');
+      window.location.reload();
+    }
   };
   let status = t('waitingReady');
   if (board.teams.length < board.min_teams) status = t('needTeams', { n: board.min_teams });
@@ -229,7 +246,10 @@ function TipCard({ tip, color }) {
 function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [tab, setTab] = useState(0); // 0 = news, 1 = trading
+  const [tab, setTab] = useState(() => {
+    const saved = sessionStorage.getItem(`turn_tab_${code}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const pager = useRef(null);
   const confirmTimer = useRef();
   const locked = me.ready;
@@ -237,6 +257,10 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
   const thisTurn = me.insiders.filter((i) => i.turn === board.turn_no);
   const earlier = me.insiders.filter((i) => i.turn < board.turn_no);
   const done = board.teams.filter((x) => x.ready).length;
+
+  useEffect(() => {
+    sessionStorage.setItem(`turn_tab_${code}`, String(tab));
+  }, [tab, code]);
 
   const goTo = (index) => {
     const el = pager.current;
@@ -292,7 +316,7 @@ function TurnView({ code, token, board, me, setMe, run, refreshMe, trader }) {
             <h2>{t('tips')}</h2>
             <p className="muted">{t('tipsHelp')}</p>
             <button className="btn coral" onClick={buyTip}
-              disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0}>
+              disabled={busy || locked || me.cash < me.insider_cost || me.insiders_left === 0 || board.turn_no < 2}>
               {t('buyTip', { cost: me.insider_cost })}
             </button>
             {me.insiders_left === 0 && <p className="muted" role="status">{t('noTipsLeft')}</p>}
@@ -405,7 +429,7 @@ function ResultsView({ board, me }) {
   );
 }
 
-function FinalView({ board, me }) {
+function FinalView({ board, me, code }) {
   return (
     <section className="stack">
       <div className="panel center">
@@ -436,7 +460,13 @@ function FinalView({ board, me }) {
           <Chart turns={board.chart.turns} series={board.chart.series} highlight={me.name} />
         </div>
       )}
-      <button className="btn ghost" onClick={() => window.location.assign('/')}>{t('startOver')}</button>
+      <button className="btn ghost" onClick={() => {
+        sessionStorage.removeItem(STORAGE_CODE);
+        sessionStorage.removeItem(STORAGE_NAME);
+        sessionStorage.removeItem(`turn_tab_${code}`);
+        sessionStorage.removeItem('host_form_values');
+        window.location.assign('/');
+      }}>{t('startOver')}</button>
     </section>
   );
 }
