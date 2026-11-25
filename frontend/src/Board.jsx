@@ -6,9 +6,10 @@ import {
   api, displayAddress, isLocalOnly, playerUrl, useCountdown, usePoll, useServerAddress,
 } from './connection/index.js';
 import { formatClock, startupColor } from './ui.js';
-import { t } from './strings.js';
+import { useT } from './strings.js';
 
 function LeaveBoard({ phase }) {
+  const t = useT();
   const leave = () => {
     const running = phase === PHASE.TURN || phase === PHASE.RESULTS;
     if (running && !window.confirm(t('leaveBoardConfirm'))) return;
@@ -18,6 +19,7 @@ function LeaveBoard({ phase }) {
 }
 
 export default function Board({ code }) {
+  const t = useT();
   const [board, , error] = usePoll(() => api.board(code), 1500, [code]);
 
   if (!board) {
@@ -43,6 +45,7 @@ export default function Board({ code }) {
 }
 
 function TeamStrip({ teams }) {
+  const t = useT();
   return (
     <ul className="team-strip">
       {teams.map((team) => (
@@ -57,6 +60,7 @@ function TeamStrip({ teams }) {
 }
 
 function Lobby({ board }) {
+  const t = useT();
   const left = useCountdown(board.countdown_ends_at, board.server_time);
   const base = useServerAddress();
   const counting = board.countdown_ends_at && left !== null;
@@ -92,6 +96,7 @@ function Lobby({ board }) {
 }
 
 function StartupPanel({ startup, index, turnNo }) {
+  const t = useT();
   const body = turnNo === 1 ? startup.description : (startup.news ?? startup.description);
   return (
     <article className={`startup-panel ${startup.open ? '' : 'is-closed'}`}
@@ -113,6 +118,7 @@ function StartupPanel({ startup, index, turnNo }) {
 }
 
 function TurnView({ board }) {
+  const t = useT();
   const left = useCountdown(board.phase_ends_at, board.server_time);
   const pct = left === null ? 0 : Math.min(100, (left / board.turn_seconds) * 100);
   const done = board.teams.filter((x) => x.ready).length;
@@ -122,7 +128,6 @@ function TurnView({ board }) {
       <header className="board-top">
         <p className="turn-label">{t('turnOf', { n: board.turn_no, total: board.turns_total })}</p>
         <p className={`clock ${urgent ? 'urgent' : ''}`} aria-label={t('timeLeft')}>{formatClock(left)}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <div className="timebar"><i className={urgent ? 'urgent' : ''} style={{ width: `${pct}%` }} /></div>
       <main className="startup-row">
@@ -157,13 +162,13 @@ function RankList({ teams, showScore }) {
 }
 
 function ResultsView({ board }) {
+  const t = useT();
   const left = useCountdown(board.phase_ends_at, board.server_time);
   return (
     <>
       <header className="board-top">
         <p className="turn-label">{t('resultsTitle', { n: board.turn_no })}</p>
         <p className="clock small" aria-live="off">{t('nextTurnIn', { n: left ?? '–' })}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <main className="results-grid">
         <section>
@@ -180,12 +185,12 @@ function ResultsView({ board }) {
 }
 
 function FinalView({ board }) {
+  const t = useT();
   return (
     <>
       <header className="board-top">
         <p className="turn-label">{t('gameOver')}</p>
         <p className="clock small">{t('finalStandings')}</p>
-        <p className="room-small">{board.room_code}</p>
       </header>
       <main className="results-grid">
         <section>

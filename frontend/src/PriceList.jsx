@@ -1,9 +1,10 @@
 import { startupColor } from './ui.js';
-import { t } from './strings.js';
+import { useT } from './strings.js';
 
 /** The price of every startup after a turn: old -> new, and the change.
  *  variant "list" is a column, "strip" a row of chips. */
 export default function PriceList({ startups, variant = 'list' }) {
+  const t = useT();
   return (
     <ul className={`price-list ${variant}`}>
       {startups.map((s, i) => {

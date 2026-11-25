@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { api } from './connection/index.js';
-import { t } from './strings.js';
+import { useT } from './strings.js';
 
 const MIN_TURN_DUR_SECONDS = 10
 
 function HostForm() {
+  const t = useT();
   const [turns, setTurns] = useState(3);
   const [minutes, setMinutes] = useState(10);
   const [seconds, setSeconds] = useState(0);

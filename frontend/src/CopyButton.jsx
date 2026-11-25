@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { t } from './strings.js';
+import { useT } from './strings.js';
 
 /** Copies text to the clipboard. The modern clipboard API only exists on secure pages
  *  (https or localhost), so on a plain http address in the classroom it falls back to
@@ -28,6 +28,7 @@ async function copyText(text) {
 }
 
 export default function CopyButton({ text }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const timer = useRef();
   useEffect(() => () => clearTimeout(timer.current), []);

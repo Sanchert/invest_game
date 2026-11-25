@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, saveSession, useRoomStatus } from './connection/index.js';
 import Field from './Field.jsx';
-import { t } from './strings.js';
+import { t, useT } from './strings.js';
 import { cleanName, LIMITS, ROOM_CODE, validateJoin } from './validation.js';
 
 const STORAGE_CODE = 'join_room_code';
@@ -12,6 +12,7 @@ const STORAGE_NAME = 'join_team_name';
  *  Values are persisted in sessionStorage so they survive page reloads.
  *  They are cleared when the tab is closed or the player leaves the game. */
 export default function JoinForm({ fixedCode, onJoined }) {
+  const t = useT();
   const [code, setCode] = useState(() => {
     if (fixedCode) return fixedCode;
     return sessionStorage.getItem(STORAGE_CODE) || '';

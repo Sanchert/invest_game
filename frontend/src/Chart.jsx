@@ -1,8 +1,9 @@
-import { t } from './strings.js';
+import { useT } from './strings.js';
 import { STARTUP_COLORS } from './ui.js';
 
 /** Line chart of every team's total profit after each turn. Plain SVG, no library. */
 export default function Chart({ turns, series, highlight }) {
+  const t = useT();
   const W = 800;
   const H = 400;
   const pad = { left: 56, right: 150, top: 20, bottom: 44 };
