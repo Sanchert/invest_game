@@ -8,8 +8,8 @@ from constants import Phase
 from game.common import insider_candidates, iso, load_startups, rule_info
 from models import (Game, Holding, Insider, News, Snapshot, Startup, Team, TeamInsider, TurnGain,
                     utcnow)
-from schemas import (BoardOut, BoardStartup, BoardTeam, Chart, ChartSeries, HoldingOut,
-                     InsiderOut, MeOut, TurnGainOut)
+from schemas import (BoardOut, BoardStartup, BoardTeam, Chart, ChartSeries, ChartStartup,
+                     ChartTurn, HoldingOut, InsiderOut, MeOut, TurnGainOut)
 from game.common import list_teams
 
 
@@ -106,9 +106,26 @@ def build_board(db: Session, game: Game) -> BoardOut:
             by_team[s.team_id][s.turn_no] = s.score
         order = sorted(teams, key=lambda x: snaps[x.id].rank if x.id in snaps else 99)
         turns = list(range(0, game.turns_total + 1))
-        chart = Chart(turns=turns, series=[
+        chart_series = [
             ChartSeries(team=x.name, scores=[by_team[x.id].get(n, 0) for n in turns])
-            for x in order])
+            for x in order]
+
+        # Build startup price history for the bar chart
+        # prices dict uses step numbers (1-based); turn t shows price at step t+1
+        # Turn 0 = starting price, Turn L = first trading turn, Turn L+1 = final price
+        startups_data = []
+        price_turns = []
+        for sid, entry in info.items():
+            prices = entry["prices"]
+            scores = [prices.get(t + 1) for t in range(0, game.turns_total + 1)]
+            startups_data.append(ChartStartup(id=sid, name=entry["startup"].name, scores=scores))
+
+        for t in turns:
+            prices_at_turn = [s.scores[t] for s in startups_data]
+            price_turns.append(ChartTurn(turn=t, prices=prices_at_turn))
+
+        chart = Chart(turns=turns, series=chart_series,
+                      startups=startups_data, price_turns=price_turns)
 
     return BoardOut(
         room_code=game.room_code, phase=phase, turn_no=game.turn_no,
