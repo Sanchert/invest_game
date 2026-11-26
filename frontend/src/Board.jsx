@@ -1,4 +1,5 @@
 import Chart from './Chart.jsx';
+import PriceChart from './PriceChart.jsx';
 import { PHASE } from './constants.js';
 import PriceList from './PriceList.jsx';
 import QrCode from './QrCode.jsx';
@@ -201,6 +202,13 @@ function FinalView({ board }) {
           <h2>{t('chartTitle')}</h2>
           {board.chart && <Chart turns={board.chart.turns} series={board.chart.series} />}
         </section>
+        {board.chart && board.chart.price_turns && (
+          <section>
+            <h2>{t('priceChartTitle')}</h2>
+            <PriceChart startups={board.chart.startups}
+              price_turns={board.chart.price_turns} />
+          </section>
+        )}
       </main>
       <section className="final-prices">
         <h2>{t('finalPrices')}</h2>

@@ -6,6 +6,7 @@ import {
 import { PHASE } from './constants.js';
 import JoinForm from './JoinForm.jsx';
 import PriceList from './PriceList.jsx';
+import PriceChart from './PriceChart.jsx';
 import { t, useT } from './strings.js';
 import { formatClock, signed, startupColor } from './ui.js';
 import { useTrader } from './useTrader.js';
@@ -468,6 +469,13 @@ function FinalView({ board, me, code }) {
         <div className="panel">
           <h2>{t('chartTitle')}</h2>
           <Chart turns={board.chart.turns} series={board.chart.series} highlight={me.name} />
+        </div>
+      )}
+      {board.chart && board.chart.price_turns && (
+        <div className="panel">
+          <h2>{t('priceChartTitle')}</h2>
+          <PriceChart startups={board.chart.startups}
+            price_turns={board.chart.price_turns} />
         </div>
       )}
       <button className="btn ghost" onClick={() => {

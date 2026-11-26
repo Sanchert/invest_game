@@ -73,9 +73,24 @@ class ChartSeries(BaseModel):
     scores: List[int]
 
 
+class ChartStartup(BaseModel):
+    """Price history of one startup across all turns."""
+    id: int
+    name: str
+    scores: List[Optional[int]]  # index = turn number; None = not yet open
+
+
+class ChartTurn(BaseModel):
+    """One column of the price bar chart: prices of all startups at a given turn."""
+    turn: int
+    prices: List[Optional[int]]  # aligned with chart.startups
+
+
 class Chart(BaseModel):
     turns: List[int]
     series: List[ChartSeries]
+    startups: List[ChartStartup]
+    price_turns: List[ChartTurn]
 
 
 class BoardOut(BaseModel):

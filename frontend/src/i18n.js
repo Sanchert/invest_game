@@ -72,6 +72,7 @@ const en = {
   finalStandings: 'Final standings',
   profit: 'Total profit',
   chartTitle: 'Profit by turn',
+  priceChartTitle: 'Price history',
   turnAxis: 'Turn',
   // errors
   gameNotFound: 'Game not found. Check the room code.',
@@ -175,6 +176,7 @@ const ru = {
   finalStandings: 'Итоговый рейтинг',
   profit: 'Общая прибыль',
   chartTitle: 'Прибыль по ходам',
+  priceChartTitle: 'История цен',
   turnAxis: 'Ход',
   gameNotFound: 'Игра не найдена. Проверьте код комнаты.',
   connectionLost: 'Связь потеряна. Пробуем снова…',
